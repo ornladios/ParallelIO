@@ -405,7 +405,7 @@ int find_var_fillvalue(file_desc_t *file, int varid, var_desc_t *vdesc)
 }
 
 #ifdef _ADIOS
-
+//static const char JoinedDim[] = "18446744073709551614";
 void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 {
     io_desc_t *iodesc = pio_get_iodesc_from_id(ioid);
@@ -415,7 +415,7 @@ void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
     enum ADIOS_DATATYPES type = adios_integer; //PIOc_get_adios_type(iodesc->piotype);
     if (sizeof(PIO_Offset) == 8)
        type = adios_long;
-    int64_t vid = adios_define_var(file->adios_group, name, "", type, ldim,"","");
+    int64_t vid = adios_define_var(file->adios_group, name, "", type, ldim,"JoinedDim","0");
     adios_define_attribute_byvalue(file->adios_group,"piotype",name,adios_integer,1,&iodesc->piotype);
     adios_define_attribute_byvalue(file->adios_group,"ndims",name,adios_integer,1,&iodesc->ndims);
     adios_define_attribute_byvalue(file->adios_group,"dimlen",name,adios_integer,iodesc->ndims,iodesc->dimlen);
@@ -444,7 +444,7 @@ int PIOc_write_darray_adios(file_desc_t *file, int varid, int ioid, PIO_Offset a
     char ldim[32];
     sprintf(varname,"darray/%s", av->name);
     sprintf(ldim, "%lld", arraylen);
-    int64_t vid = adios_define_var(file->adios_group, varname, "", av->adios_type, ldim,"","");
+    int64_t vid = adios_define_var(file->adios_group, varname, "", av->adios_type, ldim,"JoinedDim","0");
 
     adios_define_attribute_byvalue(file->adios_group,"ndims",varname,adios_integer,1,&av->ndims);
     adios_define_attribute_byvalue(file->adios_group,"nctype",varname,adios_integer,1,&av->nc_type);
