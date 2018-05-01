@@ -332,11 +332,15 @@ int PIOc_closefile(int ncid)
                 ierr = adios_close(file->adios_fh);
                 file->adios_fh = -1;
             }
+
+			/* Issue with adios free group when multiple files are opened/closed. Will be fixed later.
             if (file->adios_group != -1)
             {
                 adios_free_group(file->adios_group);
                 file->adios_group = -1;
             }
+			*/
+
             for (int i=0; i<file->num_dim_vars; i++)
             {
                 free (file->dim_names[i]);
