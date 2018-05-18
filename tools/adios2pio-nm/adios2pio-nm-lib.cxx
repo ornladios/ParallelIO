@@ -1055,7 +1055,11 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 
 		/* Create output file */
 		TimerStart(write);
-		ret = PIOc_createfile(iosysid, &ncid, &pio_iotype, outfilename.c_str(), PIO_64BIT_OFFSET);
+		/* 
+			Use NC_64BIT_DATA instead of PIO_64BIT_OFFSET. Some output files will have variables 
+			that require more than 4GB storage. 
+		*/
+		ret = PIOc_createfile(iosysid, &ncid, &pio_iotype, outfilename.c_str(), NC_64BIT_DATA); 
 		TimerStop(write);
 		if (ret)
 			throw std::runtime_error("Could not create output file " + outfilename + "\n");

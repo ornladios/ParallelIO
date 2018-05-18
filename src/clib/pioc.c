@@ -589,6 +589,22 @@ int PIOc_InitDecomp(int iosysid, int pio_type, int ndims, const int *gdimlen, in
                 return pio_err(ios, NULL, ierr, __FILE__, __LINE__);
     }
 
+	/* 
+		ADIOS uses ioid values to save decomposition information. The imax variable 
+		in pio_add_to_iodesc_list has to be the same across all ADIOS I/O nodes. If
+		a subset of nodes are used in creating decompositions for some ACME components,
+		imax values across the nodes will not be the same. The following sync all nodes 
+		to use the same imax value.  
+	*/ 
+#ifdef _ADIOS 
+	{
+		int local_imax  = pio_get_imax();
+		int global_imax = 0;
+		MPI_Allreduce(&local_imax,&global_imax,1,MPI_INT,MPI_MAX,ios->union_comm);
+		pio_set_imax(global_imax); 
+	}
+#endif 
+
     /* Add this IO description to the list. */
     *ioidp = pio_add_to_iodesc_list(iodesc);
 
