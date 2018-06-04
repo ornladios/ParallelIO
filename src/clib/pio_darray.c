@@ -460,12 +460,13 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 }
 
 static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc, 
-						adios_var_desc_t *av, void *array, int arraylen, int *ierr) 
+								adios_var_desc_t *av, void *array, int arraylen, 
+								int *ierr) 
 {
 	void *buf = array;
 	*ierr = 0;
 
-    	if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_FLOAT) {
+   	if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_FLOAT) {
 		ADIOS_CONVERT_ARRAY(array,arraylen,double,float,*ierr,buf);
 	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_REAL) {
 		ADIOS_CONVERT_ARRAY(array,arraylen,double,float,*ierr,buf);
@@ -557,7 +558,7 @@ static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc,
 		ADIOS_CONVERT_ARRAY(array,arraylen,int,unsigned char,*ierr,buf);
 	}
 	else
-    	if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_FLOAT) {
+   	if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_FLOAT) {
 		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,float,*ierr,buf);
 	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_REAL) {
 		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,float,*ierr,buf);
@@ -627,7 +628,7 @@ static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc,
 		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned long,unsigned char,*ierr,buf);
 	}
 	else
-    	if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_FLOAT) {
+   	if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_FLOAT) {
 		ADIOS_CONVERT_ARRAY(array,arraylen,short int,float,*ierr,buf);
 	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_REAL) {
 		ADIOS_CONVERT_ARRAY(array,arraylen,short int,float,*ierr,buf);
@@ -766,8 +767,8 @@ static int PIOc_write_darray_adios(
         sprintf(ldims, "%lld", arraylen);
         enum ADIOS_DATATYPES atype = av->adios_type;
 
-        /* ACME history data special handling: down-conversion from double to float */
 #if 0
+        /* ACME history data special handling: down-conversion from double to float */
         if (iodesc->piotype != av->nc_type)
         {
             if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_FLOAT)
@@ -832,13 +833,12 @@ static int PIOc_write_darray_adios(
     int buf_needs_free = 0;
     if (iodesc->piotype != av->nc_type)
     {
-		printf("Writing converted values: %d %d\n",iodesc->piotype,av->nc_type);
 		buf = PIOc_convert_buffer_adios(file,iodesc,av,array,arraylen,&ierr);
 		if (ierr!=0) {
 #ifdef _ADIOS_ALL_PROCS
        		if (file->adios_iomaster == MPI_ROOT)
 #else
-            	if (file->iosystem->iomaster == MPI_ROOT)
+            if (file->iosystem->iomaster == MPI_ROOT)
 #endif /* _ADIOS_ALL_PROCS */
                     LOG((2,"Darray '%s' decomp type is double but the target type is float. "
                             "ADIOS cannot do type conversion because memory could not be allocated."
