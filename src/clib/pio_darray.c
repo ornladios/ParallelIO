@@ -446,6 +446,310 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
     }
 }
 
+#define ADIOS_CONVERT_ARRAY(array,arraylen,from_type,to_type,ierr,buf) \
+{ \
+	from_type *d = (from_type*)array; \
+	to_type *f   = (to_type*)malloc(arraylen*sizeof(to_type)); \
+	if (f) { \
+		for (int i=0; i<arraylen; ++i) \
+			f[i] = (to_type)d[i]; \
+		buf = f; \
+	} else { \
+		ierr = 1; \
+	} \
+}
+
+static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc, 
+						adios_var_desc_t *av, void *array, int arraylen, int *ierr) 
+{
+	void *buf = array;
+	*ierr = 0;
+
+    	if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_FLOAT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_REAL) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_INT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,double,unsigned char,*ierr,buf);
+	}
+	else
+	if (iodesc->piotype == PIO_FLOAT && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_FLOAT && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_FLOAT && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,double,*ierr,buf);
+	} else if (iodesc->piotype == PIO_FLOAT && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_FLOAT && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_FLOAT && av->nc_type == PIO_INT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_FLOAT && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_FLOAT && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_FLOAT && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_FLOAT && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,unsigned char,*ierr,buf);
+	}
+	else
+	if (iodesc->piotype == PIO_REAL && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_REAL && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_REAL && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,double,*ierr,buf);
+	} else if (iodesc->piotype == PIO_REAL && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_REAL && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_REAL && av->nc_type == PIO_INT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_REAL && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_REAL && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_REAL && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_REAL && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,float,unsigned char,*ierr,buf);
+	}
+	else
+	if (iodesc->piotype == PIO_INT && av->nc_type == PIO_FLOAT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT && av->nc_type == PIO_REAL) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,double,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT && av->nc_type == PIO_INT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,int,unsigned char,*ierr,buf);
+	}
+	else
+    	if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_FLOAT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_REAL) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,double,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_INT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned int,unsigned char,*ierr,buf);
+	}
+	else
+	if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_FLOAT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_REAL) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,double,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,unsigned char,*ierr,buf);
+	}
+	else
+	if (iodesc->piotype == PIO_UINT64 && av->nc_type == PIO_FLOAT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned long,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT64 && av->nc_type == PIO_REAL) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned long,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT64 && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned long,double,*ierr,buf);
+	} else if (iodesc->piotype == PIO_INT64 && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,long,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT64 && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned long,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT64 && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned long,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT64 && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned long,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT64 && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned long,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT64 && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned long,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UINT64 && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned long,unsigned char,*ierr,buf);
+	}
+	else
+    	if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_FLOAT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_REAL) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_INT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_SHORT && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,short int,unsigned char,*ierr,buf);
+	}
+	else
+	if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_FLOAT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_REAL) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_INT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_USHORT && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,unsigned short int,unsigned char,*ierr,buf);
+	}
+	else
+	if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_FLOAT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_REAL) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_INT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_CHAR && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned char,*ierr,buf);
+	}
+	else
+	if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_FLOAT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_REAL) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_INT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_BYTE && av->nc_type == PIO_UBYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned char,*ierr,buf);
+	}
+	else
+	if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_FLOAT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_REAL) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_DOUBLE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,float,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_SHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_USHORT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned short int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_INT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_UINT) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned int,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_INT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_UINT64) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,unsigned long,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_CHAR) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,char,*ierr,buf);
+	} else if (iodesc->piotype == PIO_UBYTE && av->nc_type == PIO_BYTE) {
+		ADIOS_CONVERT_ARRAY(array,arraylen,char,char,*ierr,buf);
+	}
+
+	return buf;
+}
+
 static int PIOc_write_darray_adios(
         file_desc_t *file, int varid, int ioid, io_desc_t *iodesc,
         PIO_Offset arraylen, void *array, void *fillvalue)
@@ -463,6 +767,7 @@ static int PIOc_write_darray_adios(
         enum ADIOS_DATATYPES atype = av->adios_type;
 
         /* ACME history data special handling: down-conversion from double to float */
+#if 0
         if (iodesc->piotype != av->nc_type)
         {
             if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_FLOAT)
@@ -491,6 +796,7 @@ static int PIOc_write_darray_adios(
                             av->nc_type));
             }
         }
+#endif
 
         av->adios_varid = adios_define_var(file->adios_group, av->name, "", atype, ldims,"","");
 
@@ -526,48 +832,22 @@ static int PIOc_write_darray_adios(
     int buf_needs_free = 0;
     if (iodesc->piotype != av->nc_type)
     {
-        if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_FLOAT)
-        {
-            double *d = (double *)array;
-            float *f = (float *)malloc(arraylen*sizeof(float));
-            if (f)
-            {
-                for (int i=0; i<arraylen; ++i)
-                {
-                    f[i] = (float)d[i];
-                }
-                buf = f;
-                buf_needs_free = 1;
-            }
-            else
-            {
+		printf("Writing converted values: %d %d\n",iodesc->piotype,av->nc_type);
+		buf = PIOc_convert_buffer_adios(file,iodesc,av,array,arraylen,&ierr);
+		if (ierr!=0) {
 #ifdef _ADIOS_ALL_PROCS
-        		if (file->adios_iomaster == MPI_ROOT)
+       		if (file->adios_iomaster == MPI_ROOT)
 #else
-            if (file->iosystem->iomaster == MPI_ROOT)
+            	if (file->iosystem->iomaster == MPI_ROOT)
 #endif /* _ADIOS_ALL_PROCS */
                     LOG((2,"Darray '%s' decomp type is double but the target type is float. "
                             "ADIOS cannot do type conversion because memory could not be allocated."
                             "Therefore the data will be corrupt for this variable in the .bp output\n",
                             file->adios_vars[varid].name));
-            }
-        }
+        } else {
+			buf_needs_free = 1;
+		}
     }
-
-#if 0
-    /* DEBUG printout */
-    if (!strcmp(file->adios_vars[varid].name,"foo"))
-    {
-        /* Print the first few longitude values */
-        float *lon = (float*)buf;
-        printf("Values of '%s' addr %p..%p: [ ", file->adios_vars[varid].name, (float*)buf, ((float*)buf)+10);
-        for (int i=0; i<10; i++)
-        {
-            printf("%6.3f ", lon[i]);
-        }
-        printf("\n");
-    }
-#endif
 
     adios_write_byid(file->adios_fh, av->adios_varid, buf);
 
