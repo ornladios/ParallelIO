@@ -561,6 +561,7 @@ static int PIOc_write_darray_adios(
 
         av->adios_varid = adios_define_var(file->adios_group, av->name, "", atype, ldims,"","");
 
+#if 0 // TAHSIN
 #ifdef _ADIOS_ALL_PROCS
         if (file->adios_iomaster == MPI_ROOT)
 #else
@@ -579,7 +580,20 @@ static int PIOc_write_darray_adios(
             sprintf(decompname, "%d", ioid);
             adios_define_attribute(file->adios_group, "__pio__/decomp", av->name, adios_string, decompname, NULL);
             adios_define_attribute(file->adios_group, "__pio__/ncop", av->name, adios_string, "darray", NULL);
-         }
+        }
+#endif 
+
+#ifdef _ADIOS_ALL_PROCS
+        if (file->adios_iomaster == MPI_ROOT)
+#else
+        if (file->iosystem->iomaster == MPI_ROOT)
+#endif  /* _ADIOS_ALL_PROCS */
+        {
+            char decompname[32];
+            sprintf(decompname, "%d", ioid);
+            adios_define_attribute(file->adios_group, "__pio__/decomp", av->name, adios_string, decompname, NULL);
+            adios_define_attribute(file->adios_group, "__pio__/ncop", av->name, adios_string, "darray", NULL);
+        }
 
         if (needs_to_write_decomp(file, ioid))
         {

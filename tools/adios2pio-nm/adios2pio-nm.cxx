@@ -29,7 +29,7 @@ int main (int argc, char *argv[])
         return ret;
 #endif
 
-	SetDebugOutput(0);
+	SetDebugOutput(1);
 	ret = ConvertBPToNC(infilepath,outfilename,piotype,comm_in);
 
 #ifdef TIMING
