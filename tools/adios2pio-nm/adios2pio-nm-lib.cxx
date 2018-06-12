@@ -168,7 +168,6 @@ void ProcessGlobalFillmode(ADIOS_FILE **infile, int ncid)
 void ProcessVarAttributes(ADIOS_FILE **infile, int adios_varid, std::string varname, int ncid, int nc_varid)
 {
     ADIOS_VARINFO *vi = adios_inq_var(infile[0], infile[0]->var_namelist[adios_varid]);
-	cout << "Processing attributes: " << vi->nattrs << std::endl;
     for (int i=0; i < vi->nattrs; i++)
     {
 		if (debug_out)
@@ -195,13 +194,12 @@ void ProcessVarAttributes(ADIOS_FILE **infile, int adios_varid, std::string varn
 void ProcessGlobalAttributes(ADIOS_FILE **infile, int ncid, DimensionMap& dimension_map, VariableMap& vars_map)
 {
 	if (debug_out) cout << "Process Global Attributes: \n";
-	cout << "Processing global attributes: " << infile[0]->nattrs << std::endl;
+
 	std::string delimiter = "/";
-	std::map<std::string,int> var_defs;
+	std::map<std::string,char> var_defs;
     for (int i=0; i < infile[0]->nattrs; i++)
     {
         string a = infile[0]->attr_namelist[i];
-        cout << "Processing global attribute: " << a << std::endl;
         if (a.find("pio_global/") != string::npos)
         {
             if (debug_out) cout << "    Attribute: " << infile[0]->attr_namelist[i] << std::endl;
@@ -220,15 +218,8 @@ void ProcessGlobalAttributes(ADIOS_FILE **infile, int ncid, DimensionMap& dimens
             free(adata);
         } else {
 			std::string token = a.substr(0, a.find(delimiter));
-			cout << "TOKEN : [" << token << "]" << std::endl;
-			if (token!="") 
-				printf("I HAVE A TOKEN...\n");
-			else
-				printf("EMPTY TOKEN\n");
-			fflush(stdout);
-
-			if (token!="" && vars_map.find(token)==vars_map.end() && var_defs.find(token)==var_defs.end()) { // first encounter 
-				printf("PROCESSING VAR: %s\n",token.c_str()); fflush(stdout);
+			if (token!="" && vars_map.find(token)==vars_map.end() && var_defs.find(token)==var_defs.end()) 
+			{ // first encounter 
             	string attname = token + "/__pio__/nctype";
             	int asize;
             	int *nctype;
@@ -247,14 +238,11 @@ void ProcessGlobalAttributes(ADIOS_FILE **infile, int ncid, DimensionMap& dimens
                 	adios_get_attr(infile[0], attname.c_str(), &atype, &asize, (void**)&dimnames);
 
                 	for (int d=0; d < *ndims; d++)
-                	{
                     	dimids[d] = dimension_map[dimnames[d]].dimid;
-                    }
                 }
             	int varid;
             	PIOc_def_var(ncid, token.c_str(), *nctype, *ndims, dimids, &varid);
-				var_defs[token] = 1; 
-
+				var_defs[token] = 1; // mark the encounter, do not execute this again
 
             	free(nctype);
             	free(ndims);
@@ -269,7 +257,6 @@ Decomposition ProcessOneDecomposition(ADIOS_FILE **infile, int ncid, const char 
         int forced_type=NC_NAT)
 {
 
-	printf("Process decomposition: %s\n",varname); fflush(stdout);
     /* 
  	 * Read all decomposition blocks assigned to this process,
      * create one big array from them and create a single big 
@@ -1123,13 +1110,6 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 
 		/* For each variable, define a variable with PIO */
 		VariableMap vars_map = ProcessVariableDefinitions(infile, ncid, dimension_map, comm, mpirank, nproc);
-
-		if (vars_map.find("foo")==vars_map.end()) {
-			printf("FOO is null....\n");
-		} else {
-			printf("What is going on!!!!!\n");
-		}
-		fflush(stdout);
 
 		/* Process the global attributes */
 		ProcessGlobalAttributes(infile, ncid, dimension_map, vars_map);

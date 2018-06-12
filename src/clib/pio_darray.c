@@ -527,41 +527,9 @@ static int PIOc_write_darray_adios(
         sprintf(ldims, "%lld", arraylen);
         enum ADIOS_DATATYPES atype = av->adios_type;
 
-#if 0 /* Will always convert from iodesc->piotype to av->nc_type */
-        /* ACME history data special handling: down-conversion from double to float */
-        if (iodesc->piotype != av->nc_type)
-        {
-            if (iodesc->piotype == PIO_DOUBLE && av->nc_type == PIO_FLOAT)
-            {
-#ifdef _ADIOS_ALL_PROCS
-                if (file->adios_iomaster == MPI_ROOT)
-#else
-                if (file->iosystem->iomaster == MPI_ROOT)
-#endif /* _ADIOS_ALL_PROCS */
-                    LOG((2,"Darray '%s' decomp type is %d (size=%d) but target type is %d. We need conversion\n",
-                            file->adios_vars[varid].name, iodesc->piotype, iodesc->piotype_size,
-                            av->nc_type));
-            }
-            else
-            {
-                atype = PIOc_get_adios_type(iodesc->piotype);
-#ifdef _ADIOS_ALL_PROCS
-                if (file->adios_iomaster == MPI_ROOT)
-#else
-                if (file->iosystem->iomaster == MPI_ROOT)
-#endif /* _ADIOS_ALL_PROCS */
-                    LOG((2,"Darray '%s' decomp type is %d (size=%d) but target type is %d. "
-                            "ADIOS cannot do type conversion and therefore the data will be "
-                            "corrupt for this variable when converting from .bp to .nc with adios2pio\n",
-                            file->adios_vars[varid].name, iodesc->piotype, iodesc->piotype_size,
-                            av->nc_type));
-            }
-        }
-#endif
-
         av->adios_varid = adios_define_var(file->adios_group, av->name, "", atype, ldims,"","");
 
-#if 0 // TAHSIN
+#if 0 /* TAHSIN -- this is split between this file and pio_nc.c */ 
 #ifdef _ADIOS_ALL_PROCS
         if (file->adios_iomaster == MPI_ROOT)
 #else
@@ -581,8 +549,7 @@ static int PIOc_write_darray_adios(
             adios_define_attribute(file->adios_group, "__pio__/decomp", av->name, adios_string, decompname, NULL);
             adios_define_attribute(file->adios_group, "__pio__/ncop", av->name, adios_string, "darray", NULL);
         }
-#endif 
-
+#else /* TAHSIN */
 #ifdef _ADIOS_ALL_PROCS
         if (file->adios_iomaster == MPI_ROOT)
 #else
@@ -594,6 +561,7 @@ static int PIOc_write_darray_adios(
             adios_define_attribute(file->adios_group, "__pio__/decomp", av->name, adios_string, decompname, NULL);
             adios_define_attribute(file->adios_group, "__pio__/ncop", av->name, adios_string, "darray", NULL);
         }
+#endif /* TAHSIN */
 
         if (needs_to_write_decomp(file, ioid))
         {
