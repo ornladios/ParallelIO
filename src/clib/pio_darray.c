@@ -459,7 +459,7 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 	} \
 }
 
-#define ADIOS_CONVERT_FROM_TO(FROM_TYPE_ID,from_type) \
+#define ADIOS_CONVERT_FROM(FROM_TYPE_ID,from_type) \
 { \
    	if (iodesc->piotype == FROM_TYPE_ID && av->nc_type == PIO_DOUBLE) { \
 		ADIOS_CONVERT_ARRAY(array,arraylen,from_type,double,*ierr,buf); \
@@ -495,18 +495,18 @@ static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc,
 	void *buf = array;
 	*ierr = 0;
 
-	ADIOS_CONVERT_FROM_TO(PIO_DOUBLE,double);
-	ADIOS_CONVERT_FROM_TO(PIO_FLOAT,float);
-	ADIOS_CONVERT_FROM_TO(PIO_REAL,float);
-	ADIOS_CONVERT_FROM_TO(PIO_INT,int);
-	ADIOS_CONVERT_FROM_TO(PIO_UINT,unsigned int);
-	ADIOS_CONVERT_FROM_TO(PIO_SHORT,short int);
-	ADIOS_CONVERT_FROM_TO(PIO_USHORT,unsigned short int);
-	ADIOS_CONVERT_FROM_TO(PIO_INT64,int64_t);
-	ADIOS_CONVERT_FROM_TO(PIO_UINT64,uint64_t);
-	ADIOS_CONVERT_FROM_TO(PIO_CHAR,char);
-	ADIOS_CONVERT_FROM_TO(PIO_BYTE,char);
-	ADIOS_CONVERT_FROM_TO(PIO_UBYTE,unsigned char);
+	ADIOS_CONVERT_FROM(PIO_DOUBLE,double);
+	ADIOS_CONVERT_FROM(PIO_FLOAT,float);
+	ADIOS_CONVERT_FROM(PIO_REAL,float);
+	ADIOS_CONVERT_FROM(PIO_INT,int);
+	ADIOS_CONVERT_FROM(PIO_UINT,unsigned int);
+	ADIOS_CONVERT_FROM(PIO_SHORT,short int);
+	ADIOS_CONVERT_FROM(PIO_USHORT,unsigned short int);
+	ADIOS_CONVERT_FROM(PIO_INT64,int64_t);
+	ADIOS_CONVERT_FROM(PIO_UINT64,uint64_t);
+	ADIOS_CONVERT_FROM(PIO_CHAR,char);
+	ADIOS_CONVERT_FROM(PIO_BYTE,char);
+	ADIOS_CONVERT_FROM(PIO_UBYTE,unsigned char);
 
 	return buf;
 }
@@ -528,40 +528,18 @@ static int PIOc_write_darray_adios(
         enum ADIOS_DATATYPES atype = av->adios_type;
 
         av->adios_varid = adios_define_var(file->adios_group, av->name, "", atype, ldims,"","");
-
-#if 0 /* TAHSIN -- this is split between this file and pio_nc.c */ 
+		
 #ifdef _ADIOS_ALL_PROCS
         if (file->adios_iomaster == MPI_ROOT)
 #else
         if (file->iosystem->iomaster == MPI_ROOT)
 #endif  /* _ADIOS_ALL_PROCS */
-        {
-            adios_define_attribute_byvalue(file->adios_group,"__pio__/ndims",av->name,adios_integer,1,&av->ndims);
-            adios_define_attribute_byvalue(file->adios_group,"__pio__/nctype",av->name,adios_integer,1,&av->nc_type);
-            char* dimnames[6];
-            for (int i = 0; i < av->ndims; i++)
-            {
-                dimnames[i] = file->dim_names[av->gdimids[i]];
-            }
-            adios_define_attribute_byvalue(file->adios_group,"__pio__/dims",av->name,adios_string_array,av->ndims,dimnames);
+        { /* TAHSIN: Some of the codes were moved to pio_nc.c */
             char decompname[32];
             sprintf(decompname, "%d", ioid);
             adios_define_attribute(file->adios_group, "__pio__/decomp", av->name, adios_string, decompname, NULL);
             adios_define_attribute(file->adios_group, "__pio__/ncop", av->name, adios_string, "darray", NULL);
         }
-#else /* TAHSIN */
-#ifdef _ADIOS_ALL_PROCS
-        if (file->adios_iomaster == MPI_ROOT)
-#else
-        if (file->iosystem->iomaster == MPI_ROOT)
-#endif  /* _ADIOS_ALL_PROCS */
-        {
-            char decompname[32];
-            sprintf(decompname, "%d", ioid);
-            adios_define_attribute(file->adios_group, "__pio__/decomp", av->name, adios_string, decompname, NULL);
-            adios_define_attribute(file->adios_group, "__pio__/ncop", av->name, adios_string, "darray", NULL);
-        }
-#endif /* TAHSIN */
 
         if (needs_to_write_decomp(file, ioid))
         {
