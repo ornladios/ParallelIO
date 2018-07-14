@@ -528,6 +528,13 @@ static int PIOc_write_darray_adios(
         enum ADIOS_DATATYPES atype = av->adios_type;
 
         av->adios_varid = adios_define_var(file->adios_group, av->name, "", atype, ldims,"","");
+
+		/* different decompositions at different frames */
+		char name_varid[256];
+		sprintf(name_varid,"decomp_id/%s",av->name);
+		av->decomp_varid = adios_define_var(file->adios_group, name_varid, "", adios_integer, "1","","");  
+		sprintf(name_varid,"frame_id/%s",av->name);
+		av->frame_varid = adios_define_var(file->adios_group, name_varid, "", adios_integer, "1","","");  
 		
 #ifdef _ADIOS_ALL_PROCS
         if (file->adios_iomaster == MPI_ROOT)
@@ -540,12 +547,13 @@ static int PIOc_write_darray_adios(
             adios_define_attribute(file->adios_group, "__pio__/decomp", av->name, adios_string, decompname, NULL);
             adios_define_attribute(file->adios_group, "__pio__/ncop", av->name, adios_string, "darray", NULL);
         }
-
-        if (needs_to_write_decomp(file, ioid))
-        {
-            PIOc_write_decomp_adios(file,ioid);
-            register_decomp(file, ioid);
-        }
+    }
+	
+	/* PIOc_setframe with different decompositions */
+	if (needs_to_write_decomp(file, ioid))
+    {
+        PIOc_write_decomp_adios(file,ioid);
+        register_decomp(file, ioid);
     }
 
     /* ACME history data special handling: down-conversion from double to float */
@@ -570,6 +578,10 @@ static int PIOc_write_darray_adios(
     }
 
     adios_write_byid(file->adios_fh, av->adios_varid, buf);
+
+	/* different decompositions at different frames */
+    adios_write_byid(file->adios_fh, av->decomp_varid, &ioid);
+    adios_write_byid(file->adios_fh, av->frame_varid, &(file->varlist[varid].record));
 
     if (buf_needs_free)
         free(buf);
