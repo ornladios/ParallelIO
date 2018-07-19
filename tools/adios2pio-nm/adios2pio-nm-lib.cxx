@@ -822,19 +822,14 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
     int ret = 0;
 
 	char *varname = infile[0]->var_namelist[adios_varid];
+
+
+#if 0
     string attname = string(varname) + "/__pio__/decomp";
     int asize;
     ADIOS_DATATYPES atype;
     char *decompname;
     adios_get_attr(infile[0], attname.c_str(), &atype, &asize, (void**)&decompname);
-
-	/* different decompositions at different frames */
-	char decomp_varname[256];
-	char frame_varname[256];
-	sprintf(decomp_varname,"decomp_id/%s",varname);
-	sprintf(frame_varname,"frame_id/%s",varname);
-	int  decomp_id;
-	int  frame_id;
 
     Decomposition decomp = decomp_map[decompname];
     if (decomp.piotype != var.nctype)
@@ -846,6 +841,7 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
         decomp = GetNewDecomposition(decomp_map, decompname, infile, ncid, wfiles, var.nctype, iosysid, mpirank, nproc);
     }
     free(decompname);
+#endif
 
     ADIOS_VARINFO *vi = adios_inq_var(infile[0], varname);
     adios_inq_var_blockinfo(infile[0], vi);
@@ -911,6 +907,14 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
         ts = nsteps-1;
     }
 
+	/* different decompositions at different frames */
+	char decomp_varname[128];
+	char frame_varname[128];
+	char decompname[64];
+	sprintf(decomp_varname,"decomp_id/%s",varname);
+	sprintf(frame_varname,"frame_id/%s",varname);
+	int  decomp_id, frame_id; 
+
 	// TAHSIN -- THIS IS GETTING CONFUSING. NEED TO THINK ABOUT time steps. 
     for (; ts < nsteps; ++ts)
     {
@@ -968,12 +972,21 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
         TimerStop(read);
 
         TimerStart(write);
+       	/* Type conversion may happened at writing. Now we make a new decomposition for this nctype */
+		sprintf(decompname,"%d",decomp_id);
+    	Decomposition decomp = decomp_map[decompname];
+    	if (decomp.piotype != var.nctype) {
+        	decomp = GetNewDecomposition(decomp_map, decompname, infile, ncid, wfiles, var.nctype, iosysid, mpirank, nproc);
+		} else  {
+			decomp.ioid = decomp_id;
+		}
+		if (frame_id<0) frame_id = 0;
         if (wfiles[0] < nblocks_per_step)
         {
 			/* different decompositions at different frames */	
             if (var.is_timed)
                 PIOc_setframe(ncid, var.nc_varid, frame_id);
-            ret = PIOc_write_darray(ncid, var.nc_varid, decomp_id, (PIO_Offset)nelems,
+            ret = PIOc_write_darray(ncid, var.nc_varid, decomp.ioid, (PIO_Offset)nelems,
                     d.data(), NULL);
         }
         TimerStop(write);

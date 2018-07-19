@@ -312,7 +312,7 @@ int check_file(int ntasks, char *filename) {
 	      ntasks == 8 || ntasks == 16))
 	    fprintf(stderr, "Number of processors must be 1, 2, 4, 8, or 16!\n");
 	if (verbose)
-	    printf("%d: ParallelIO Library example3 running on %d processors.\n",
+	    printf("%d: ParallelIO Library example_adios2 running on %d processors.\n",
 		   my_rank, ntasks);
 
 	/* keep things simple - 1 iotask per MPI process */    
@@ -373,7 +373,7 @@ int check_file(int ntasks, char *filename) {
 	for (int fmt = 0; fmt < num_flavors; fmt++) 
 	{
 	    /* Create a filename. */
-	    sprintf(filename, "example3_%d.nc", fmt);
+	    sprintf(filename, "output_adios2_%d.nc", fmt);
             
 	    /* Create the netCDF output file. */
 	    if (verbose)

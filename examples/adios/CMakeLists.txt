@@ -25,9 +25,13 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
 
-ADD_EXECUTABLE(example3 example3.c)
-TARGET_LINK_LIBRARIES(example3 pioc)
-add_dependencies(tests example3)
+ADD_EXECUTABLE(example_adios1 example_adios1.c)
+TARGET_LINK_LIBRARIES(example_adios1 pioc)
+add_dependencies(tests example_adios1)
+
+ADD_EXECUTABLE(example_adios2 example_adios2.c)
+TARGET_LINK_LIBRARIES(example_adios2 pioc)
+add_dependencies(tests example_adios2)
 
 ADD_EXECUTABLE(timesteps timesteps.c)
 TARGET_LINK_LIBRARIES(timesteps pioc)
@@ -36,6 +40,18 @@ add_dependencies(tests timesteps)
 ADD_EXECUTABLE(timesteps_double timesteps_double.c)
 TARGET_LINK_LIBRARIES(timesteps_double pioc)
 add_dependencies(tests timesteps_double)
+
+ADD_EXECUTABLE(example_typeconvert example_typeconvert.c)
+TARGET_LINK_LIBRARIES(example_typeconvert pioc)
+add_dependencies(tests example_typeconvert)
+
+ADD_EXECUTABLE(example_shiftdecomp example_shiftdecomp.c)
+TARGET_LINK_LIBRARIES(example_shiftdecomp pioc)
+add_dependencies(tests example_shiftdecomp)
+
+ADD_EXECUTABLE(example_double example_double.c)
+TARGET_LINK_LIBRARIES(example_double pioc)
+add_dependencies(tests example_double)
 
 
 ###-------------------------------------------------------------------------###
