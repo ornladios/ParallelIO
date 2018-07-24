@@ -978,7 +978,7 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
     	if (decomp.piotype != var.nctype) {
         	decomp = GetNewDecomposition(decomp_map, decompname, infile, ncid, wfiles, var.nctype, iosysid, mpirank, nproc);
 		} else  {
-			decomp.ioid = decomp_id;
+			if (var.is_timed) decomp.ioid = decomp_id;
 		}
 		if (frame_id<0) frame_id = 0;
         if (wfiles[0] < nblocks_per_step)
