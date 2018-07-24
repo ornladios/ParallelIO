@@ -822,27 +822,6 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
     int ret = 0;
 
 	char *varname = infile[0]->var_namelist[adios_varid];
-
-
-#if 0
-    string attname = string(varname) + "/__pio__/decomp";
-    int asize;
-    ADIOS_DATATYPES atype;
-    char *decompname;
-    adios_get_attr(infile[0], attname.c_str(), &atype, &asize, (void**)&decompname);
-
-    Decomposition decomp = decomp_map[decompname];
-    if (decomp.piotype != var.nctype)
-    {
-        /* 
- 		 * Type conversion may happened at writing. Now we make a new decomposition
-         * for this nctype
-         */
-        decomp = GetNewDecomposition(decomp_map, decompname, infile, ncid, wfiles, var.nctype, iosysid, mpirank, nproc);
-    }
-    free(decompname);
-#endif
-
     ADIOS_VARINFO *vi = adios_inq_var(infile[0], varname);
     adios_inq_var_blockinfo(infile[0], vi);
 
@@ -972,13 +951,11 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
         TimerStop(read);
 
         TimerStart(write);
-       	/* Type conversion may happened at writing. Now we make a new decomposition for this nctype */
 		sprintf(decompname,"%d",decomp_id);
     	Decomposition decomp = decomp_map[decompname];
     	if (decomp.piotype != var.nctype) {
+       		/* Type conversion may happened at writing. Now we make a new decomposition for this nctype */
         	decomp = GetNewDecomposition(decomp_map, decompname, infile, ncid, wfiles, var.nctype, iosysid, mpirank, nproc);
-		} else  {
-			if (var.is_timed) decomp.ioid = decomp_id;
 		}
 		if (frame_id<0) frame_id = 0;
         if (wfiles[0] < nblocks_per_step)
