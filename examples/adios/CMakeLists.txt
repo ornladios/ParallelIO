@@ -53,6 +53,10 @@ ADD_EXECUTABLE(example_double example_double.c)
 TARGET_LINK_LIBRARIES(example_double pioc)
 add_dependencies(tests example_double)
 
+ADD_EXECUTABLE(example_filename example_filename.c)
+TARGET_LINK_LIBRARIES(example_filename pioc)
+add_dependencies(tests example_filename)
+
 
 ###-------------------------------------------------------------------------###
 ### CMakeList.txt for examples using pio
