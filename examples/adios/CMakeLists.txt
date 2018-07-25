@@ -57,6 +57,9 @@ ADD_EXECUTABLE(example_filename example_filename.c)
 TARGET_LINK_LIBRARIES(example_filename pioc)
 add_dependencies(tests example_filename)
 
+ADD_EXECUTABLE(example_noclobber example_noclobber.c)
+TARGET_LINK_LIBRARIES(example_noclobber pioc)
+add_dependencies(tests example_noclobber)
 
 ###-------------------------------------------------------------------------###
 ### CMakeList.txt for examples using pio
