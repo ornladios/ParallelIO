@@ -61,6 +61,10 @@ ADD_EXECUTABLE(example_noclobber example_noclobber.c)
 TARGET_LINK_LIBRARIES(example_noclobber pioc)
 add_dependencies(tests example_noclobber)
 
+ADD_EXECUTABLE(example_decomphole example_decomphole.c)
+TARGET_LINK_LIBRARIES(example_decomphole pioc)
+add_dependencies(tests example_decomphole)
+
 ###-------------------------------------------------------------------------###
 ### CMakeList.txt for examples using pio
 ###-------------------------------------------------------------------------###
