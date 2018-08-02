@@ -297,7 +297,9 @@ Decomposition ProcessOneDecomposition(ADIOS_FILE **infile, int ncid, const char 
 		}
 	}
 
-   	std::vector<PIO_Offset> d(nelems+1);
+	/* allocate +1 to prevent d.data() from returning NULL. Otherwise, read/write operations fail */
+	/* nelems may be 0, when some processes do not have any data */
+   	std::vector<PIO_Offset> d(nelems+1);  
    	uint64_t offset = 0;
    	for (int i=1;i<=wfiles.size();i++) {
 		ADIOS_VARINFO *vb = adios_inq_var(infile[i], varname);
@@ -930,6 +932,8 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
 
 		/* Read local data for each file */
         int elemsize = adios_type_size(vi->type,NULL);
+		/* allocate +1 to prevent d.data() from returning NULL. Otherwise, read/write operations fail */
+		/* nelems may be 0, when some processes do not have any data */
         std::vector<char> d((nelems+1) * elemsize);
         uint64_t offset = 0;
 		for (int i=1;i<=wfiles.size();i++) {
@@ -1114,8 +1118,6 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 
 		/* First process decompositions */
 		DecompositionMap decomp_map = ProcessDecompositions(infile, ncid, wfiles,iosysid,comm, mpirank, nproc);
-
-		printf("PROCESS DECOMP DONE.\n"); fflush(stdout);
 
 		/* Create output file */
 		TimerStart(write);
