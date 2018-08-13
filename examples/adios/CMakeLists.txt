@@ -65,6 +65,14 @@ ADD_EXECUTABLE(example_decomphole example_decomphole.c)
 TARGET_LINK_LIBRARIES(example_decomphole pioc)
 add_dependencies(tests example_decomphole)
 
+ADD_EXECUTABLE(example_put_var example_put_var.c)
+TARGET_LINK_LIBRARIES(example_put_var pioc)
+add_dependencies(tests example_put_var)
+
+ADD_EXECUTABLE(example_weird_a example_weird_a.c)
+TARGET_LINK_LIBRARIES(example_weird_a pioc)
+add_dependencies(tests example_weird_a)
+
 ###-------------------------------------------------------------------------###
 ### CMakeList.txt for examples using pio
 ###-------------------------------------------------------------------------###
