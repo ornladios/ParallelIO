@@ -428,20 +428,19 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
     io_desc_t *iodesc = pio_get_iodesc_from_id(ioid);
     char name[32], ldim[32];
     sprintf(name, "/__pio__/decomp/%d", ioid);
+
+   	enum ADIOS_DATATYPES type = adios_integer; //PIOc_get_adios_type(iodesc->piotype);
+   	if (sizeof(PIO_Offset) == 8)
+   		type = adios_long;
+
 	if (iodesc->maplen!=1) {
     	sprintf(ldim, "%d", iodesc->maplen);
-    	enum ADIOS_DATATYPES type = adios_integer; //PIOc_get_adios_type(iodesc->piotype);
-    	if (sizeof(PIO_Offset) == 8)
-       		type = adios_long;
     	int64_t vid = adios_define_var(file->adios_group, name, "", type, ldim,"","");
     	adios_write_byid(file->adios_fh, vid, iodesc->map);
 	} else { // Handle the case where maplen is 1
 		int maplen = iodesc->maplen+1; 
 		char *mapbuf = NULL;
 		sprintf(ldim, "%d", maplen);
-    	enum ADIOS_DATATYPES type = adios_integer; //PIOc_get_adios_type(iodesc->piotype);
-    	if (sizeof(PIO_Offset) == 8)
-       		type = adios_long;
 		if (type==adios_integer) {
 			int *temp_mapbuf;
 			temp_mapbuf    = (int*)malloc(sizeof(int)*maplen);	
@@ -537,27 +536,27 @@ static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc,
 	return buf;
 }
 
-void *PIOc_copy_adios(void *array, PIO_Offset arraylen, adios_var_desc_t *av) 
+#define ADIOS_COPY_ONE(temp_buf,array,var_type) \
+{ \
+	temp_buf = (var_type*)malloc(2*sizeof(var_type)); \
+    memcpy(temp_buf,array,sizeof(var_type)); \
+}
+
+void *PIOc_copy_one_element_adios(void *array, adios_var_desc_t *av) 
 {
-	void *temp_buf;
+	void *temp_buf = NULL;
 	if (av->nc_type==PIO_DOUBLE) {
-		temp_buf = (double*)malloc(sizeof(double)*arraylen);
-		memcpy(temp_buf,array,sizeof(double)*(arraylen-1));
-	} else if (av->nc_type==PIO_FLOAT) {
-        temp_buf = (float*)malloc(sizeof(float)*arraylen);
-        memcpy(temp_buf,array,sizeof(float)*(arraylen-1));
+		ADIOS_COPY_ONE(temp_buf,array,double);
+	} else if (av->nc_type==PIO_FLOAT || av->nc_type==PIO_REAL) {
+		ADIOS_COPY_ONE(temp_buf,array,float);
 	} else if (av->nc_type==PIO_INT || av->nc_type==PIO_UINT) {
-        temp_buf = (int*)malloc(sizeof(int)*arraylen);
-        memcpy(temp_buf,array,sizeof(int)*(arraylen-1));
+		ADIOS_COPY_ONE(temp_buf,array,int);
 	} else if (av->nc_type==PIO_SHORT || av->nc_type==PIO_USHORT) {
-        temp_buf = (short int*)malloc(sizeof(short int)*arraylen);
-        memcpy(temp_buf,array,sizeof(short int)*(arraylen-1));
+		ADIOS_COPY_ONE(temp_buf,array,short int);
 	} else if (av->nc_type==PIO_INT64 || av->nc_type==PIO_UINT64) {
-        temp_buf = (int64_t*)malloc(sizeof(int64_t)*arraylen);
-        memcpy(temp_buf,array,sizeof(int64_t)*(arraylen-1));
+		ADIOS_COPY_ONE(temp_buf,array,int64_t);
 	} else if (av->nc_type==PIO_CHAR || av->nc_type==PIO_BYTE || av->nc_type==PIO_UBYTE) {
-        temp_buf = (char*)malloc(sizeof(char)*arraylen);
-        memcpy(temp_buf,array,sizeof(char)*(arraylen-1));
+		ADIOS_COPY_ONE(temp_buf,array,char);
 	}
 	return temp_buf;
 }
@@ -575,7 +574,7 @@ static int PIOc_write_darray_adios(
 	void *temp_buf = NULL;
 	if (arraylen==1) { // Handle the case where there is one array element 
 		arraylen++;
-		temp_buf = PIOc_copy_adios(array,arraylen,av);
+		temp_buf = PIOc_copy_one_element_adios(array,av);
 		array = temp_buf;
 	}
 
@@ -642,9 +641,7 @@ static int PIOc_write_darray_adios(
     adios_write_byid(file->adios_fh, av->decomp_varid, &ioid);
     adios_write_byid(file->adios_fh, av->frame_varid, &(file->varlist[varid].record));
 
-    if (buf_needs_free)
-        free(buf);
-
+    if (buf_needs_free) free(buf);
 	if (temp_buf!=NULL) free(temp_buf);
 
     return PIO_NOERR;
