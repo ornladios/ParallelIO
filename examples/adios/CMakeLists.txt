@@ -73,6 +73,10 @@ ADD_EXECUTABLE(example_weird_a example_weird_a.c)
 TARGET_LINK_LIBRARIES(example_weird_a pioc)
 add_dependencies(tests example_weird_a)
 
+ADD_EXECUTABLE(example_fillvalue example_fillvalue.c)
+TARGET_LINK_LIBRARIES(example_fillvalue pioc)
+add_dependencies(tests example_fillvalue)
+
 ###-------------------------------------------------------------------------###
 ### CMakeList.txt for examples using pio
 ###-------------------------------------------------------------------------###
