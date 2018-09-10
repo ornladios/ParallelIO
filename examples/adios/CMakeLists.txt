@@ -77,6 +77,10 @@ ADD_EXECUTABLE(example_fillvalue example_fillvalue.c)
 TARGET_LINK_LIBRARIES(example_fillvalue pioc)
 add_dependencies(tests example_fillvalue)
 
+ADD_EXECUTABLE(example_scalar_char_var example_scalar_char_var.c)
+TARGET_LINK_LIBRARIES(example_scalar_char_var pioc)
+add_dependencies(tests example_scalar_char_var)
+
 ###-------------------------------------------------------------------------###
 ### CMakeList.txt for examples using pio
 ###-------------------------------------------------------------------------###
