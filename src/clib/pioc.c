@@ -7,6 +7,10 @@
  * @see http://code.google.com/p/parallelio/
  */
 
+#ifdef _ADIOS2
+#define _ADIOS2_DEFINE_GLOBAL
+#endif 
+
 #include <config.h>
 #include <pio.h>
 #include <pio_internal.h>
@@ -605,6 +609,15 @@ int PIOc_InitDecomp(int iosysid, int pio_type, int ndims, const int *gdimlen, in
 	}
 #endif 
 
+#ifdef _ADIOS2 
+	{
+		int local_imax  = pio_get_imax();
+		int global_imax = 0;
+		MPI_Allreduce(&local_imax,&global_imax,1,MPI_INT,MPI_MAX,ios->union_comm);
+		pio_set_imax(global_imax); 
+	}
+#endif 
+
     /* Add this IO description to the list. */
     *ioidp = pio_add_to_iodesc_list(iodesc);
 
@@ -760,6 +773,12 @@ int PIOc_InitDecomp_bc(int iosysid, int pio_type, int ndims, const int *gdimlen,
     static int adios_init_ref_cnt = 0;
 #endif
 
+#ifdef _ADIOS2
+    /* Initialize ADIOS once */
+    static int adios_init_ref_cnt = 0;
+#endif
+
+
 /**
  * Library initialization used when IO tasks are a subset of compute
  * tasks.
@@ -822,6 +841,16 @@ int PIOc_Init_Intracomm(MPI_Comm comp_comm, int num_iotasks, int stride, int bas
     if (!adios_init_ref_cnt)
     {
         adios_init_noxml(comp_comm);
+    }
+    adios_init_ref_cnt++;
+#endif
+
+#ifdef _ADIOS2
+    /* Initialize ADIOS once */
+    if (!adios_init_ref_cnt)
+    {
+		adiosH = adios2_init(comp_comm, adios2_debug_mode_on);
+    	ioH = adios2_declare_io(adiosH, "E3MS_ADIOS");
     }
     adios_init_ref_cnt++;
 #endif
@@ -1136,6 +1165,14 @@ int PIOc_finalize(int iosysid)
     if (!adios_init_ref_cnt)
     {
         adios_finalize(ios->comp_rank);
+    }
+#endif
+
+#ifdef _ADIOS2
+    --adios_init_ref_cnt;
+    if (!adios_init_ref_cnt)
+    {
+    	adios2_finalize(adiosH);
     }
 #endif
 
