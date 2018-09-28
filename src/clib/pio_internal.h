@@ -108,6 +108,10 @@ extern "C" {
 	int  pio_get_imax();
 	int  pio_set_imax(int imax_val);
 #endif 
+#ifdef _ADIOS2
+	int  pio_get_imax();
+	int  pio_set_imax(int imax_val);
+#endif 
     int  pio_add_to_iodesc_list(io_desc_t *iodesc);
     io_desc_t *pio_get_iodesc_from_id(int ioid);
     int pio_delete_iodesc_from_list(int ioid);
