@@ -137,15 +137,15 @@ endif ()
 
 #===== ADIOS-C =====
 if (WITH_ADIOS)
-  find_package (ADIOS "1.10.0")
+  find_package (ADIOS "2.2.0")
 endif ()
 if (ADIOS_FOUND)
   target_include_directories (pioc
     PUBLIC ${ADIOS_INCLUDE_DIRS})
   target_compile_definitions (pioc
-    PUBLIC _ADIOS)
+    PUBLIC _ADIOS2)
   target_link_libraries (pioc
-    PUBLIC ${ADIOS_LIBRARIES} adios2pio-nm-lib)
+    PUBLIC ${ADIOS_LIBRARIES})
 else ()
   target_compile_definitions (pioc
     PUBLIC _NOADIOS)

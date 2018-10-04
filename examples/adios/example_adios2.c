@@ -367,6 +367,9 @@ int check_file(int ntasks, char *filename) {
 #ifdef _ADIOS
         format[num_flavors++] = PIO_IOTYPE_ADIOS;
 #endif
+#ifdef _ADIOS2
+        format[num_flavors++] = PIO_IOTYPE_ADIOS;
+#endif
 	
 	/* Use PIO to create the example file in each of the four
 	 * available ways. */

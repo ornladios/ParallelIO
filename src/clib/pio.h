@@ -957,6 +957,15 @@ enum PIO_ERROR_HANDLERS
 /** Define dynamic memory allocation */
 #define _USE_MALLOC_    1
 #endif
+#ifdef _ADIOS2
+/** Define error codes for ADIOS. */
+#define PIO_EADIOSREAD  (-300)
+
+/** Define dynamic memory allocation */
+#define _USE_MALLOC_    1
+#endif
+
+
 
 /** ??? */
 #define PIO_REQ_NULL (NC_REQ_NULL-1)
@@ -1416,6 +1425,16 @@ extern "C" {
     char *strdup(const char *str);
 #      endif
 #   endif
+#   ifdef _ADIOS2
+    adios2_type PIOc_get_adios_type(nc_type xtype);
+    nc_type PIOc_get_nctype_from_adios_type(adios2_type atype);
+	int adios2_type_size(adios2_type type, const void *var);
+#      ifndef strdup
+    char *strdup(const char *str);
+#      endif
+#   endif
+
+
 
 
 #if defined(__cplusplus)

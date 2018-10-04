@@ -668,15 +668,15 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
     char name[32], ldim[32];
     sprintf(name, "/__pio__/decomp/%d", ioid);
 
-   	adios2_type type = adios2_type_integer; 
+   	adios2_type type = adios2_type_int; 
    	if (sizeof(PIO_Offset) == 8)
-   		type = adios2_type_long;
+   		type = adios2_type_long_int;
 
 	if (iodesc->maplen!=1) {
     	sprintf(ldim, "%d", iodesc->maplen);
 
 		size_t shape[1];
-    	shape[0] = (size_t)1;
+    	shape[0] = (size_t)iodesc->maplen;
     	size_t start[1];
     	start[0] = (size_t)0;
     	size_t count[1];
@@ -688,7 +688,7 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 		int maplen = iodesc->maplen+1; 
 		char *mapbuf = NULL;
 		sprintf(ldim, "%d", maplen);
-		if (type==adios2_type_integer) {
+		if (type==adios2_type_int) {
 			int *temp_mapbuf;
 			temp_mapbuf    = (int*)malloc(sizeof(int)*maplen);	
 			temp_mapbuf[0] = iodesc->map[0];
@@ -703,7 +703,7 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 		}
 
 		size_t shape[1];
-    	shape[0] = (size_t)1;
+    	shape[0] = (size_t)maplen;
     	size_t start[1];
     	start[0] = (size_t)0;
     	size_t count[1];
@@ -719,11 +719,11 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
    	{
 		char att_name[64];
 		sprintf(att_name,"%s/piotype",name);
-		adios2_define_attribute(file->ioH,att_name,adios2_type_integer,&iodesc->piotype,1);
+		adios2_define_attribute(file->ioH,att_name,adios2_type_int,&iodesc->piotype,1);
 		sprintf(att_name,"%s/ndims",name);
-		adios2_define_attribute(file->ioH,att_name,adios2_type_integer,&iodesc->ndims,1);
+		adios2_define_attribute(file->ioH,att_name,adios2_type_int,&iodesc->ndims,1);
 		sprintf(att_name,"%s/dimlen",name);
-		adios2_define_attribute(file->ioH,att_name,adios2_type_integer,iodesc->ndims,iodesc->dimlen);
+		adios2_define_attribute(file->ioH,att_name,adios2_type_int,iodesc->dimlen,iodesc->ndims);
    	}
 }
 
@@ -759,7 +759,7 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 	} else if (iodesc->piotype == FROM_TYPE_ID && av->nc_type == PIO_INT64) { \
 		ADIOS_CONVERT_ARRAY(array,arraylen,from_type,int64_t,*ierr,buf); \
 	} else if (iodesc->piotype == FROM_TYPE_ID && av->nc_type == PIO_UINT64) { \
-		ADIOS_CONVERT_ARRAY(array,arraylen,from_type,uint64_t,*ierr,buf); \
+		ADIOS_CONVERT_ARRAY(array,arraylen,from_type,int64_t,*ierr,buf); \
 	} else if (iodesc->piotype == FROM_TYPE_ID && av->nc_type == PIO_CHAR) { \
 		ADIOS_CONVERT_ARRAY(array,arraylen,from_type,char,*ierr,buf); \
 	} else if (iodesc->piotype == FROM_TYPE_ID && av->nc_type == PIO_BYTE) { \
@@ -784,7 +784,7 @@ static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc,
 	ADIOS_CONVERT_FROM(PIO_SHORT,short int);
 	ADIOS_CONVERT_FROM(PIO_USHORT,unsigned short int);
 	ADIOS_CONVERT_FROM(PIO_INT64,int64_t);
-	ADIOS_CONVERT_FROM(PIO_UINT64,uint64_t);
+	ADIOS_CONVERT_FROM(PIO_UINT64,int64_t);
 	ADIOS_CONVERT_FROM(PIO_CHAR,char);
 	ADIOS_CONVERT_FROM(PIO_BYTE,char);
 	ADIOS_CONVERT_FROM(PIO_UBYTE,unsigned char);
@@ -842,7 +842,7 @@ static int PIOc_write_darray_adios(
         adios2_type atype = av->adios_type;
 
 		size_t shape[1],start[1],count[1];
-		shape[0] = 1; start[0] = 0; count[0] = (size_t)arraylen;
+		shape[0] = (size_t)arraylen; start[0] = 0; count[0] = (size_t)arraylen;
         av->adios_varid = adios2_define_variable(file->ioH,av->name,atype,1,shape,start,count,
 												adios2_constant_dims_true);
 
@@ -850,10 +850,10 @@ static int PIOc_write_darray_adios(
 		char name_varid[256];
 		sprintf(name_varid,"decomp_id/%s",av->name);
 		count[0] = 1;
-		av->decomp_varid = adios2_define_variable(file->ioH,name_varid,adios2_type_integer,1,shape,start,count,
+		av->decomp_varid = adios2_define_variable(file->ioH,name_varid,adios2_type_int,1,shape,start,count,
                                                 adios2_constant_dims_true);
 		sprintf(name_varid,"frame_id/%s",av->name);
-		av->frame_varid = adios2_define_variable(file->ioH,name_varid,adios2_type_integer,1,shape,start,count,
+		av->frame_varid = adios2_define_variable(file->ioH,name_varid,adios2_type_int,1,shape,start,count,
                                                 adios2_constant_dims_true);
 		sprintf(name_varid,"fillval_id/%s",av->name);
 		av->fillval_varid = adios2_define_variable(file->ioH,name_varid,atype,1,shape,start,count,
@@ -863,9 +863,9 @@ static int PIOc_write_darray_adios(
         { /* TAHSIN: Some of the codes were moved to pio_nc.c */
             char decompname[32], att_name[64];
             sprintf(decompname, "%d", ioid);
-			sprintf(att_name,"__pio__/decomp/%s",av->name);
+			sprintf(att_name,"%s/__pio__/decomp",av->name);
 			adios2_define_attribute(file->ioH,att_name,adios2_type_string,decompname,1);
-			sprintf(att_name,"__pio__/ncop/%s",av->name);
+			sprintf(att_name,"%s/__pio__/ncop",av->name);
 			adios2_define_attribute(file->ioH,att_name,adios2_type_string,"darray",1);
         }
     }

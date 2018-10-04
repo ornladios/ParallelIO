@@ -94,12 +94,12 @@ cmake_minimum_required(VERSION 2.8.5)
 ###############################################################################
 # get flags for adios_config, -l is the default
 #-f for fortran, -r for readonly, -s for sequential (nompi)
-set(OPTLIST "-l")
+set(OPTLIST "--libs --cxxflags")
 if(ADIOS_FIND_COMPONENTS)
     foreach(COMP ${ADIOS_FIND_COMPONENTS})
         string(TOLOWER ${COMP} comp)
         if(comp STREQUAL "fortran")
-            set(OPTLIST "${OPTLIST}f")
+            set(OPTLIST "${OPTLIST}")
         elseif(comp STREQUAL "readonly")
             set(OPTLIST "${OPTLIST}r")
         elseif(comp STREQUAL "sequential")
@@ -118,7 +118,7 @@ set(ADIOS_FOUND TRUE)
 # find `adios_config` program #################################################
 #   check the ADIOS_PATH hint and the normal PATH
 find_file(ADIOS_CONFIG
-    NAME adios_config
+    NAME adios2-config
     PATHS $ENV{ADIOS_PATH}/bin $ENV{ADIOS_DIR}/bin $ENV{INSTALL_PREFIX}/bin $ENV{PATH})
 
 if(ADIOS_CONFIG)
@@ -130,7 +130,7 @@ endif(ADIOS_CONFIG)
 
 # check `adios_config` program ################################################
 if(ADIOS_FOUND)
-    execute_process(COMMAND ${ADIOS_CONFIG} ${OPTLIST}
+    execute_process(COMMAND ${ADIOS_CONFIG} --libs 
                     OUTPUT_VARIABLE ADIOS_LINKFLAGS
                     RESULT_VARIABLE ADIOS_CONFIG_RETURN
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -140,7 +140,7 @@ if(ADIOS_FOUND)
     endif()
 
     # find ADIOS_ROOT_DIR
-    execute_process(COMMAND ${ADIOS_CONFIG} -d
+    execute_process(COMMAND ${ADIOS_CONFIG} --prefix
                     OUTPUT_VARIABLE ADIOS_ROOT_DIR
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
     if(NOT IS_DIRECTORY "${ADIOS_ROOT_DIR}")
@@ -212,7 +212,7 @@ if(ADIOS_FOUND)
     endforeach(foo)
 
     # add the version string
-    execute_process(COMMAND ${ADIOS_CONFIG} -v
+    execute_process(COMMAND ${ADIOS_CONFIG} --version 
                     OUTPUT_VARIABLE ADIOS_VERSION
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
     

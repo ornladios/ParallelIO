@@ -56,6 +56,9 @@ int main(int argc, char* argv[])
 #ifdef _ADIOS
   format[num_flavors++] = PIO_IOTYPE_ADIOS;
 #endif
+#ifdef _ADIOS2
+  format[num_flavors++] = PIO_IOTYPE_ADIOS;
+#endif
 
   buffer = malloc(DIM_LEN * sizeof(int));
   for (int i = 0; i < DIM_LEN; i++)

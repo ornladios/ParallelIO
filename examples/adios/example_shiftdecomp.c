@@ -93,6 +93,9 @@ int main(int argc, char* argv[])
 #ifdef _ADIOS
   format[num_flavors++] = PIO_IOTYPE_ADIOS;
 #endif
+#ifdef _ADIOS2
+  format[num_flavors++] = PIO_IOTYPE_ADIOS;
+#endif
 
   for (int fmt = 0; fmt < num_flavors; fmt++) {
     sprintf(filename, "output_shiftdecomp_%d.nc", fmt);

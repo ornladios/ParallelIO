@@ -850,7 +850,7 @@ int PIOc_Init_Intracomm(MPI_Comm comp_comm, int num_iotasks, int stride, int bas
     if (!adios_init_ref_cnt)
     {
 		adiosH = adios2_init(comp_comm, adios2_debug_mode_on);
-    	ioH = adios2_declare_io(adiosH, "E3MS_ADIOS");
+    	// ioH = adios2_declare_io(adiosH, "E3MS_ADIOS");
     }
     adios_init_ref_cnt++;
 #endif

@@ -42,6 +42,9 @@ int main(int argc, char* argv[])
 #ifdef _ADIOS
   format[num_flavors++] = PIO_IOTYPE_ADIOS;
 #endif
+#ifdef _ADIOS2
+  format[num_flavors++] = PIO_IOTYPE_ADIOS;
+#endif
 
   PIOc_set_iosystem_error_handling(iosysid, PIO_RETURN_ERROR, NULL);
 
