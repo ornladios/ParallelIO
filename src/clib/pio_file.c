@@ -197,11 +197,8 @@ int PIOc_closefile(int ncid)
     file_desc_t *file;     /* Pointer to file information. */
     int ierr = PIO_NOERR;  /* Return code from function calls. */
     int mpierr = MPI_SUCCESS, mpierr2;  /* Return code from MPI function codes. */
-#ifdef _ADIOS
-    char outfilename[PIO_MAX_NAME + 1];
-    size_t len = 0;
-#endif
-#ifdef _ADIOS2
+
+#if defined(_ADIOS) || defined(_ADIOS2)
     char outfilename[PIO_MAX_NAME + 1];
     size_t len = 0;
 #endif
@@ -302,50 +299,50 @@ int PIOc_closefile(int ncid)
 #endif
 #ifdef _ADIOS2
     if (file->iotype==PIO_IOTYPE_ADIOS) {
-            if (file->engineH != NULL)
-            {
-                LOG((2,"ADIOS close file %s\n", file->filename));
-				adios2_define_attribute(file->ioH,"/__pio__/fillmode",adios2_type_int,&file->fillmode,1);
-                adios2_close(file->engineH);
-                file->engineH = NULL;
-            }
+		if (file->engineH != NULL)
+        {
+        	LOG((2,"ADIOS close file %s\n", file->filename));
+			adios2_define_attribute(file->ioH,"/__pio__/fillmode",adios2_type_int,&file->fillmode,1);
+            adios2_close(file->engineH);
+            file->engineH = NULL;
+        }
 
-            for (int i=0; i<file->num_dim_vars; i++)
-            {
-                free (file->dim_names[i]);
-                file->dim_names[i] = NULL;
-            }
-            file->num_dim_vars = 0;
-            for (int i=0; i<file->num_vars; i++)
-            {
-                free(file->adios_vars[i].name);
-                file->adios_vars[i].name = NULL;
-                free(file->adios_vars[i].gdimids);
-                file->adios_vars[i].gdimids = NULL;
-            }
-            file->num_vars = 0;
+        for (int i=0; i<file->num_dim_vars; i++)
+        {
+        	free (file->dim_names[i]);
+            file->dim_names[i] = NULL;
+        }
+        file->num_dim_vars = 0;
+        for (int i=0; i<file->num_vars; i++)
+        {
+            free(file->adios_vars[i].name);
+            file->adios_vars[i].name = NULL;
+            free(file->adios_vars[i].gdimids);
+            file->adios_vars[i].gdimids = NULL;
+        }
+        file->num_vars = 0;
 
-			/* Track attributes */
-			for (int i=0; i<file->num_attrs; i++) {
-				free(file->adios_attrs[i].att_name);
-				file->adios_attrs[i].att_name = NULL;
-			}
-			file->num_attrs = 0;
+		/* Track attributes */
+		for (int i=0; i<file->num_attrs; i++) {
+			free(file->adios_attrs[i].att_name);
+			file->adios_attrs[i].att_name = NULL;
+		}
+		file->num_attrs = 0;
 
 #undef CONVERT_TEST
 #ifdef CONVERT_TEST /* TAHSIN -- comment out for large scale run */
-            /* Convert XXXX.nc.bp to XXXX.nc */
-            len = strlen(file->filename);
-            assert(len > 6 && len <= PIO_MAX_NAME);
-            strncpy(outfilename, file->filename, len - 3);
-            outfilename[len - 3] = '\0';
-			printf("CONVERTING: %s\n",file->filename); fflush(stdout);
-            C_API_ConvertBPToNC(file->filename, outfilename, "pnetcdf", ios->union_comm);
+        /* Convert XXXX.nc.bp to XXXX.nc */
+        len = strlen(file->filename);
+        assert(len > 6 && len <= PIO_MAX_NAME);
+        strncpy(outfilename, file->filename, len - 3);
+        outfilename[len - 3] = '\0';
+		printf("CONVERTING: %s\n",file->filename); fflush(stdout);
+        C_API_ConvertBPToNC(file->filename, outfilename, "pnetcdf", ios->union_comm);
 		printf("DONE CONVERTING: %s\n",file->filename); fflush(stdout);
 #endif 
 
-            free(file->filename);
-            ierr = 0;
+        free(file->filename);
+        ierr = 0;
 	}
 #endif
 
@@ -372,12 +369,7 @@ int PIOc_closefile(int ncid)
             ierr = ncmpi_close(file->fh);
             break;
 #endif
-#ifdef _ADIOS
-  	case PIO_IOTYPE_ADIOS: /* needed to avoid default case and error. */
-  		ierr = 0;
-  		break;
-#endif
-#ifdef _ADIOS2
+#if defined(_ADIOS) || defined(_ADIOS2)
   	case PIO_IOTYPE_ADIOS: /* needed to avoid default case and error. */
   		ierr = 0;
   		break;
@@ -497,16 +489,10 @@ int PIOc_sync(int ncid)
         return pio_err(NULL, NULL, ierr, __FILE__, __LINE__);
     ios = file->iosystem;
 
-#ifdef _ADIOS
+#if defined(_ADIOS) || defined(_ADIOS2)
     if (file->iotype != PIO_IOTYPE_ADIOS)
     {
 #endif
-#ifdef _ADIOS2
-    if (file->iotype != PIO_IOTYPE_ADIOS)
-    {
-#endif
-
-
     /* Flush data buffers on computational tasks. */
     if (!ios->async || !ios->ioproc)
     {
@@ -588,11 +574,8 @@ int PIOc_sync(int ncid)
         LOG((2, "PIOc_sync ierr = %d", ierr));
     }
 
-#ifdef _ADIOS
-    }
-#endif
-#ifdef _ADIOS2
-    }
+#if defined(_ADIOS) || defined(_ADIOS2)
+ 	}
 #endif
 
     /* Broadcast and check the return code. */

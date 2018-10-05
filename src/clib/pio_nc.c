@@ -2438,8 +2438,15 @@ int PIOc_def_dim(int ncid, const char *name, PIO_Offset len, int *idp)
 			shape[0] = (size_t)1;
 			start[0] = (size_t)0;
 			count[0] = (size_t)1;
-            adios2_variable *variableH = adios2_define_variable(file->ioH, dimname, 
-							adios2_type_unsigned_long_int,1,shape,start,count,adios2_constant_dims_true);
+	
+			adios2_variable *variableH = adios2_inquire_variable(file->ioH,dimname);			
+			if (variableH==NULL) {
+            	variableH = adios2_define_variable(file->ioH, dimname, 
+								adios2_type_unsigned_long_int,1,
+								shape,start,count,adios2_constant_dims_false);
+			} else {
+				adios2_set_selection(variableH,1,start,count);
+			}
             file->dim_names[file->num_dim_vars] = strdup(name);
             file->dim_values[file->num_dim_vars] = len;
             *idp = file->num_dim_vars;
@@ -2628,9 +2635,11 @@ int PIOc_def_var(int ncid, const char *name, nc_type xtype, int ndims,
         		{
 					char myattname[64];
 					sprintf(myattname,"%s/__pio__/ndims",av->name);
-					adios2_define_attribute(file->ioH,myattname,adios2_type_int,&av->ndims,1);
+					if (adios2_inquire_attribute(file->ioH,myattname)==NULL) 
+						adios2_define_attribute(file->ioH,myattname,adios2_type_int,&av->ndims,1);
 					sprintf(myattname,"%s/__pio__/nctype",av->name);
-					adios2_define_attribute(file->ioH,myattname,adios2_type_int,&av->nc_type,1);
+					if (adios2_inquire_attribute(file->ioH,myattname)==NULL) 
+						adios2_define_attribute(file->ioH,myattname,adios2_type_int,&av->nc_type,1);
 					if (av->ndims!=0) { /* If zero dimensions, do not write out __pio__/dims */
             			char* dimnames[6];
             			for (int i = 0; i < av->ndims; i++) {
@@ -2639,7 +2648,10 @@ int PIOc_def_var(int ncid, const char *name, nc_type xtype, int ndims,
 						}
 						sprintf(myattname,"%s/__pio__/dims",av->name);
 						printf("3 myattname: %s %d\n",myattname,av->ndims);
-						adios2_define_attribute(file->ioH,myattname,adios2_type_string_array,dimnames,av->ndims);
+						if (adios2_inquire_attribute(file->ioH,myattname)==NULL) {
+							printf("Defining attribute: %s\n",myattname);
+							adios2_define_attribute(file->ioH,myattname,adios2_type_string_array,dimnames,av->ndims);
+						}
 					}
          		}
     		}

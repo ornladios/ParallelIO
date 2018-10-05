@@ -600,16 +600,7 @@ int PIOc_InitDecomp(int iosysid, int pio_type, int ndims, const int *gdimlen, in
 		imax values across the nodes will not be the same. The following sync all nodes 
 		to use the same imax value.  
 	*/ 
-#ifdef _ADIOS 
-	{
-		int local_imax  = pio_get_imax();
-		int global_imax = 0;
-		MPI_Allreduce(&local_imax,&global_imax,1,MPI_INT,MPI_MAX,ios->union_comm);
-		pio_set_imax(global_imax); 
-	}
-#endif 
-
-#ifdef _ADIOS2 
+#if defined(_ADIOS) || defined(_ADIOS2)
 	{
 		int local_imax  = pio_get_imax();
 		int global_imax = 0;
@@ -768,16 +759,10 @@ int PIOc_InitDecomp_bc(int iosysid, int pio_type, int ndims, const int *gdimlen,
                            &rearr, NULL, NULL);
 }
 
-#ifdef _ADIOS
+#if defined(_ADIOS) || defined(_ADIOS2)
     /* Initialize ADIOS once */
     static int adios_init_ref_cnt = 0;
 #endif
-
-#ifdef _ADIOS2
-    /* Initialize ADIOS once */
-    static int adios_init_ref_cnt = 0;
-#endif
-
 
 /**
  * Library initialization used when IO tasks are a subset of compute
@@ -844,14 +829,10 @@ int PIOc_Init_Intracomm(MPI_Comm comp_comm, int num_iotasks, int stride, int bas
     }
     adios_init_ref_cnt++;
 #endif
-
 #ifdef _ADIOS2
     /* Initialize ADIOS once */
     if (!adios_init_ref_cnt)
-    {
 		adiosH = adios2_init(comp_comm, adios2_debug_mode_on);
-    	// ioH = adios2_declare_io(adiosH, "E3MS_ADIOS");
-    }
     adios_init_ref_cnt++;
 #endif
 
@@ -1167,13 +1148,10 @@ int PIOc_finalize(int iosysid)
         adios_finalize(ios->comp_rank);
     }
 #endif
-
 #ifdef _ADIOS2
     --adios_init_ref_cnt;
     if (!adios_init_ref_cnt)
-    {
     	adios2_finalize(adiosH);
-    }
 #endif
 
     /* Delete the iosystem_desc_t data associated with this id. */

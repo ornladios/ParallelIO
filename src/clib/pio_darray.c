@@ -12,6 +12,10 @@
 #include <pio.h>
 #include <pio_internal.h>
 
+#ifdef _ADIOS2 /* uint64_t definition */
+#include <stdint.h>
+#endif 
+
 /* 10MB default limit. */
 PIO_Offset pio_buffer_size_limit = 10485760;
 
@@ -407,7 +411,6 @@ int find_var_fillvalue(file_desc_t *file, int varid, var_desc_t *vdesc)
 }
 
 #ifdef _ADIOS
-
 static int needs_to_write_decomp(file_desc_t *file, int ioid)
 {
     int ret = 1; // yes
@@ -646,7 +649,6 @@ static int PIOc_write_darray_adios(
 #endif
 
 #ifdef _ADIOS2
-
 static int needs_to_write_decomp(file_desc_t *file, int ioid)
 {
     int ret = 1; // yes
@@ -675,11 +677,9 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 	if (iodesc->maplen!=1) {
     	sprintf(ldim, "%d", iodesc->maplen);
 
-		size_t shape[1];
+		size_t shape[1],start[1],count[1];
     	shape[0] = (size_t)iodesc->maplen;
-    	size_t start[1];
     	start[0] = (size_t)0;
-    	size_t count[1];
     	count[0] = (size_t)iodesc->maplen;
 		adios2_variable *variableH = adios2_define_variable(file->ioH, name, type, 1, 
 									shape, start, count, adios2_constant_dims_true);
@@ -702,11 +702,9 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 			mapbuf = (char*)temp_mapbuf;
 		}
 
-		size_t shape[1];
+		size_t shape[1],start[1],count[1];
     	shape[0] = (size_t)maplen;
-    	size_t start[1];
     	start[0] = (size_t)0;
-    	size_t count[1];
     	count[0] = (size_t)maplen;
 		adios2_variable *variableH = adios2_define_variable(file->ioH, name, type, 1, 
 									shape, start, count, adios2_constant_dims_true);
@@ -759,7 +757,7 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 	} else if (iodesc->piotype == FROM_TYPE_ID && av->nc_type == PIO_INT64) { \
 		ADIOS_CONVERT_ARRAY(array,arraylen,from_type,int64_t,*ierr,buf); \
 	} else if (iodesc->piotype == FROM_TYPE_ID && av->nc_type == PIO_UINT64) { \
-		ADIOS_CONVERT_ARRAY(array,arraylen,from_type,int64_t,*ierr,buf); \
+		ADIOS_CONVERT_ARRAY(array,arraylen,from_type,uint64_t,*ierr,buf); \
 	} else if (iodesc->piotype == FROM_TYPE_ID && av->nc_type == PIO_CHAR) { \
 		ADIOS_CONVERT_ARRAY(array,arraylen,from_type,char,*ierr,buf); \
 	} else if (iodesc->piotype == FROM_TYPE_ID && av->nc_type == PIO_BYTE) { \
@@ -784,7 +782,7 @@ static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc,
 	ADIOS_CONVERT_FROM(PIO_SHORT,short int);
 	ADIOS_CONVERT_FROM(PIO_USHORT,unsigned short int);
 	ADIOS_CONVERT_FROM(PIO_INT64,int64_t);
-	ADIOS_CONVERT_FROM(PIO_UINT64,int64_t);
+	ADIOS_CONVERT_FROM(PIO_UINT64,uint64_t);
 	ADIOS_CONVERT_FROM(PIO_CHAR,char);
 	ADIOS_CONVERT_FROM(PIO_BYTE,char);
 	ADIOS_CONVERT_FROM(PIO_UBYTE,unsigned char);
@@ -837,10 +835,7 @@ static int PIOc_write_darray_adios(
     if (av->adios_varid == NULL)
     {
         /* First we need to define the variable now that we know it's decomposition */
-        char ldims[256];
-        sprintf(ldims, "%lld", arraylen);
         adios2_type atype = av->adios_type;
-
 		size_t shape[1],start[1],count[1];
 		shape[0] = (size_t)arraylen; start[0] = 0; count[0] = (size_t)arraylen;
         av->adios_varid = adios2_define_variable(file->ioH,av->name,atype,1,shape,start,count,
@@ -849,7 +844,7 @@ static int PIOc_write_darray_adios(
 		/* different decompositions at different frames */
 		char name_varid[256];
 		sprintf(name_varid,"decomp_id/%s",av->name);
-		count[0] = 1;
+		shape[0] = 1; start[0] = 0; count[0] = 1;
 		av->decomp_varid = adios2_define_variable(file->ioH,name_varid,adios2_type_int,1,shape,start,count,
                                                 adios2_constant_dims_true);
 		sprintf(name_varid,"frame_id/%s",av->name);
@@ -910,7 +905,6 @@ static int PIOc_write_darray_adios(
 
     return PIO_NOERR;
 }
-
 #endif
 
 
@@ -1031,21 +1025,13 @@ int PIOc_write_darray(int ncid, int varid, int ioid, PIO_Offset arraylen, void *
             break;
     LOG((3, "wmb->ioid = %d wmb->recordvar = %d", wmb->ioid, wmb->recordvar));
 
-#ifdef _ADIOS
+#if defined(_ADIOS) || defined(_ADIOS2)
     if (file->iotype == PIO_IOTYPE_ADIOS)
     {
         ierr = PIOc_write_darray_adios(file, varid, ioid, iodesc, arraylen, array, fillvalue);
         return ierr;
     }
 #endif
-#ifdef _ADIOS2
-    if (file->iotype == PIO_IOTYPE_ADIOS)
-    {
-        ierr = PIOc_write_darray_adios(file, varid, ioid, iodesc, arraylen, array, fillvalue);
-        return ierr;
-    }
-#endif
-
 
     /* If we did not find an existing wmb entry, create a new wmb. */
     if (wmb->ioid != ioid || wmb->recordvar != recordvar)
@@ -1295,19 +1281,12 @@ int PIOc_read_darray(int ncid, int varid, int ioid, PIO_Offset arraylen,
     pioassert(iodesc->rearranger == PIO_REARR_BOX || iodesc->rearranger == PIO_REARR_SUBSET,
               "unknown rearranger", __FILE__, __LINE__);
 
-#ifdef _ADIOS
+#if defined(_ADIOS) || defined(_ADIOS2)
     if (file->iotype == PIO_IOTYPE_ADIOS)
     {
         return pio_err(ios, file, PIO_EADIOSREAD, __FILE__, __LINE__);
     }
 #endif
-#ifdef _ADIOS2
-    if (file->iotype == PIO_IOTYPE_ADIOS)
-    {
-        return pio_err(ios, file, PIO_EADIOSREAD, __FILE__, __LINE__);
-    }
-#endif
-
 
     /* ??? */
     if (ios->iomaster == MPI_ROOT)
