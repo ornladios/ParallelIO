@@ -693,7 +693,6 @@ typedef struct file_desc_t
     int n_written_ioids;
     int written_ioids[100]; // written_ioids[N] = ioid if that decomp has been already written,
 #endif
-
 #ifdef _ADIOS2
     /** Save the filename, now just for printing it at close */
     char *filename;
@@ -950,22 +949,13 @@ enum PIO_ERROR_HANDLERS
 #define PIO_FIRST_ERROR_CODE (-500)
 #define PIO_EBADIOTYPE  (-500)
 
-#ifdef _ADIOS
+#if defined(_ADIOS) || defined(_ADIOS2)
 /** Define error codes for ADIOS. */
 #define PIO_EADIOSREAD  (-300)
 
 /** Define dynamic memory allocation */
 #define _USE_MALLOC_    1
 #endif
-#ifdef _ADIOS2
-/** Define error codes for ADIOS. */
-#define PIO_EADIOSREAD  (-300)
-
-/** Define dynamic memory allocation */
-#define _USE_MALLOC_    1
-#endif
-
-
 
 /** ??? */
 #define PIO_REQ_NULL (NC_REQ_NULL-1)

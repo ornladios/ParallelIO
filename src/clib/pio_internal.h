@@ -104,11 +104,7 @@ extern "C" {
                          MPI_Comm io_comm);
 
     void pio_get_env(void);
-#ifdef _ADIOS
-	int  pio_get_imax();
-	int  pio_set_imax(int imax_val);
-#endif 
-#ifdef _ADIOS2
+#if defined(_ADIOS) || defined(_ADIOS2)
 	int  pio_get_imax();
 	int  pio_set_imax(int imax_val);
 #endif 

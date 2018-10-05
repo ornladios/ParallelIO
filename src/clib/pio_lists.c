@@ -257,11 +257,7 @@ int pio_num_iosystem(int *niosysid)
  * @author Jim Edwards
  */
 static int imax=511; // ADIOS needs a unique ID for the entire run
-#ifdef _ADIOS
-int pio_get_imax() { return imax; }
-int pio_set_imax(int imax_val) { imax = imax_val; }
-#endif 
-#ifdef _ADIOS2
+#if defined(_ADIOS) || defined(_ADIOS2)
 int pio_get_imax() { return imax; }
 int pio_set_imax(int imax_val) { imax = imax_val; }
 #endif 
@@ -278,12 +274,7 @@ int pio_add_to_iodesc_list(io_desc_t *iodesc)
     }
     else
     {
-#ifdef _ADIOS  // ADIOS needs a unique ID. The IDs should not be reused
-		for (ciodesc = pio_iodesc_list; ciodesc->next;
-             ciodesc = ciodesc->next)
-            ;
-        ciodesc->next = iodesc;
-#elif _ADIOS2
+#if defined(_ADIOS) || defined(_ADIOS2)  // ADIOS needs a unique ID. The IDs should not be reused
 		for (ciodesc = pio_iodesc_list; ciodesc->next;
              ciodesc = ciodesc->next)
             ;
