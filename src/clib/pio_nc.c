@@ -2239,9 +2239,7 @@ int PIOc_def_dim(int ncid, const char *name, PIO_Offset len, int *idp)
             char dimname[128];
             snprintf(dimname, sizeof(dimname), "/__pio__/dim/%s", name);
 			size_t shape[1], start[1], count[1];
-			shape[0] = (size_t)1;
-			start[0] = (size_t)0;
-			count[0] = (size_t)1;
+			shape[0] = 1; start[0] = 0; count[0] = 1;
 	
 			adios2_variable *variableH = adios2_inquire_variable(file->ioH,dimname);			
 			if (variableH==NULL) {
@@ -2437,24 +2435,20 @@ int PIOc_def_var(int ncid, const char *name, nc_type xtype, int ndims,
     			adios_var_desc_t * av = &(file->adios_vars[*varidp]);
         		if (file->adios_iomaster == MPI_ROOT)
         		{
-					char myattname[64];
-					sprintf(myattname,"%s/__pio__/ndims",av->name);
-					if (adios2_inquire_attribute(file->ioH,myattname)==NULL) 
-						adios2_define_attribute(file->ioH,myattname,adios2_type_int,&av->ndims,1);
-					sprintf(myattname,"%s/__pio__/nctype",av->name);
-					if (adios2_inquire_attribute(file->ioH,myattname)==NULL) 
-						adios2_define_attribute(file->ioH,myattname,adios2_type_int,&av->nc_type,1);
+					char att_name[64];
+					sprintf(att_name,"%s/__pio__/ndims",av->name);
+					if (adios2_inquire_attribute(file->ioH,att_name)==NULL) 
+						adios2_define_attribute(file->ioH,att_name,adios2_type_int,&av->ndims,1);
+					sprintf(att_name,"%s/__pio__/nctype",av->name);
+					if (adios2_inquire_attribute(file->ioH,att_name)==NULL) 
+						adios2_define_attribute(file->ioH,att_name,adios2_type_int,&av->nc_type,1);
 					if (av->ndims!=0) { /* If zero dimensions, do not write out __pio__/dims */
             			char* dimnames[6];
-            			for (int i = 0; i < av->ndims; i++) {
+            			for (int i = 0; i < av->ndims; i++) 
                				dimnames[i] = file->dim_names[av->gdimids[i]];
-							printf("dimnames: %s\n",dimnames[i]);
-						}
-						sprintf(myattname,"%s/__pio__/dims",av->name);
-						printf("3 myattname: %s %d\n",myattname,av->ndims);
-						if (adios2_inquire_attribute(file->ioH,myattname)==NULL) {
-							printf("Defining attribute: %s\n",myattname);
-							adios2_define_attribute(file->ioH,myattname,adios2_type_string_array,dimnames,av->ndims);
+						sprintf(att_name,"%s/__pio__/dims",av->name);
+						if (adios2_inquire_attribute(file->ioH,att_name)==NULL) {
+							adios2_define_attribute(file->ioH,att_name,adios2_type_string_array,dimnames,av->ndims);
 						}
 					}
          		}
@@ -2624,14 +2618,7 @@ int PIOc_def_var_fill(int ncid, int varid, int fill_mode, const void *fill_value
     }
 
 	/* ADIOS: assume all procs are also IO tasks */
-#ifdef _ADIOS
-    if (file->iotype == PIO_IOTYPE_ADIOS)
-    {
-            LOG((2,"ADIOS missing %s:%s\n", __FILE__, __func__));
-            ierr = 0;
-    }
-#endif
-#ifdef _ADIOS2
+#if defined(_ADIOS) || defined(_ADIOS2)
     if (file->iotype == PIO_IOTYPE_ADIOS)
     {
             LOG((2,"ADIOS missing %s:%s\n", __FILE__, __func__));
@@ -2808,14 +2795,7 @@ int PIOc_inq_var_fill(int ncid, int varid, int *no_fill, void *fill_valuep)
     }
 
 	/* ADIOS: assume all procs are also IO tasks */
-#ifdef _ADIOS
-    if (file->iotype == PIO_IOTYPE_ADIOS)
-    {
-         LOG((2,"ADIOS missing %s:%s\n", __FILE__, __func__));
-         ierr = 0;
-    }
-#endif
-#ifdef _ADIOS2
+#if defined(_ADIOS) || defined(_ADIOS2)
     if (file->iotype == PIO_IOTYPE_ADIOS)
     {
          LOG((2,"ADIOS missing %s:%s\n", __FILE__, __func__));
