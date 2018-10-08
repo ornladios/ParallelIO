@@ -1288,18 +1288,18 @@ int PIOc_put_vars_tc(int ncid, int varid, const PIO_Offset *start, const PIO_Off
                  * getting parallel IO here. */
 				if (file->adios_iomaster == MPI_ROOT)
                 {
+					size_t av_shape[1],av_start[1],av_count[1];
                     if (av->adios_varid == NULL) {
-						size_t av_shape[1],av_start[1],av_count[1];
             			av_shape[0] = 1; av_start[0] = 0; av_count[0] = 1;
 						av->adios_varid = adios2_inquire_variable(file->ioH,av->name);
-						if (av->adios_varid==NULL) 
+						if (av->adios_varid==NULL) { 
                         	av->adios_varid = adios2_define_variable(file->ioH, av->name, av->adios_type,
 										1,av_shape,av_start,av_count,adios2_constant_dims_false);
+						}
                     }
-					size_t my_start[1], my_count[1];
-					my_start[0] = (size_t)start[0];
-					my_count[0] = (size_t)count[0];
-					adios2_set_selection(av->adios_varid,1,my_start,my_count);
+					av_start[0] = (size_t)0;
+					av_count[0] = (size_t)1;
+					adios2_set_selection(av->adios_varid,1,av_start,av_count);
 					adios2_put(file->engineH, av->adios_varid, buf, adios2_mode_sync);
                 }
             }
@@ -1310,19 +1310,18 @@ int PIOc_put_vars_tc(int ncid, int varid, const PIO_Offset *start, const PIO_Off
                  * getting parallel IO here. */
 				if (file->adios_iomaster == MPI_ROOT)
                 {
+					size_t av_shape[1],av_start[1],av_count[1];
                     if (av->adios_varid == NULL)
                     {
-						size_t av_shape[1],av_start[1],av_count[1];
                         av_shape[0] = 1; av_start[0] = 0; av_count[0] = 1;
 						av->adios_varid = adios2_inquire_variable(file->ioH,av->name);
 						if (av->adios_varid==NULL)
                         	av->adios_varid = adios2_define_variable(file->ioH, av->name, av->adios_type,
                                 	1,av_shape,av_start,av_count,adios2_constant_dims_false);
                     }
-					size_t my_start[1], my_count[1];
-					my_start[0] = (size_t)start[0];
-					my_count[0] = (size_t)count[0];
-					adios2_set_selection(av->adios_varid,1,my_start,my_count);
+					av_start[0] = (size_t)start[0];
+					av_count[0] = (size_t)count[0];
+					adios2_set_selection(av->adios_varid,1,av_start,av_count);
 					adios2_put(file->engineH, av->adios_varid, buf, adios2_mode_sync);
 
                     char* dimnames[6];
