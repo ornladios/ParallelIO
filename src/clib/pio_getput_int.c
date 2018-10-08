@@ -1296,7 +1296,10 @@ int PIOc_put_vars_tc(int ncid, int varid, const PIO_Offset *start, const PIO_Off
                         	av->adios_varid = adios2_define_variable(file->ioH, av->name, av->adios_type,
 										1,av_shape,av_start,av_count,adios2_constant_dims_false);
                     }
-					adios2_set_selection(av->adios_varid,1,start,count);
+					size_t my_start[1], my_count[1];
+					my_start[0] = (size_t)start[0];
+					my_count[0] = (size_t)count[0];
+					adios2_set_selection(av->adios_varid,1,my_start,my_count);
 					adios2_put(file->engineH, av->adios_varid, buf, adios2_mode_sync);
                 }
             }
@@ -1316,7 +1319,10 @@ int PIOc_put_vars_tc(int ncid, int varid, const PIO_Offset *start, const PIO_Off
                         	av->adios_varid = adios2_define_variable(file->ioH, av->name, av->adios_type,
                                 	1,av_shape,av_start,av_count,adios2_constant_dims_false);
                     }
-					adios2_set_selection(av->adios_varid,1,start,count);
+					size_t my_start[1], my_count[1];
+					my_start[0] = (size_t)start[0];
+					my_count[0] = (size_t)count[0];
+					adios2_set_selection(av->adios_varid,1,my_start,my_count);
 					adios2_put(file->engineH, av->adios_varid, buf, adios2_mode_sync);
 
                     char* dimnames[6];
