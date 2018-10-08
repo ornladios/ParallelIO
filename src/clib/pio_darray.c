@@ -667,16 +667,14 @@ static void register_decomp(file_desc_t *file, int ioid)
 static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 {
     io_desc_t *iodesc = pio_get_iodesc_from_id(ioid);
-    char name[32], ldim[32];
+    char name[32];
     sprintf(name, "/__pio__/decomp/%d", ioid);
 
    	adios2_type type = adios2_type_int; 
    	if (sizeof(PIO_Offset) == 8)
    		type = adios2_type_long_int;
 
-	if (iodesc->maplen!=1) {
-    	sprintf(ldim, "%d", iodesc->maplen);
-
+	if (iodesc->maplen>1) {
 		size_t shape[1],start[1],count[1];
     	shape[0] = (size_t)iodesc->maplen;
     	start[0] = (size_t)0;
@@ -684,10 +682,17 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 		adios2_variable *variableH = adios2_define_variable(file->ioH, name, type, 1, 
 									shape, start, count, adios2_constant_dims_true);
    		adios2_put(file->engineH, variableH, iodesc->map, adios2_mode_sync);
+	} else if (iodesc->maplen==0) { // Handle the case where maplen is 0
+		long   mapbuf[2];
+		size_t shape[1],start[1],count[1];
+		shape[0] = (size_t)2; start[0] = (size_t)0; count[0] = (size_t)2;
+		mapbuf[0] = 0; mapbuf[1] = 0;
+		adios2_variable *variableH = adios2_define_variable(file->ioH, name, type, 1,
+							shape, start, count, adios2_constant_dims_true);
+       	adios2_put(file->engineH, variableH, mapbuf, adios2_mode_sync);
 	} else { // Handle the case where maplen is 1
 		int maplen = iodesc->maplen+1; 
 		char *mapbuf = NULL;
-		sprintf(ldim, "%d", maplen);
 		if (type==adios2_type_int) {
 			int *temp_mapbuf;
 			temp_mapbuf    = (int*)malloc(sizeof(int)*maplen);	
@@ -825,12 +830,18 @@ static int PIOc_write_darray_adios(
 
     adios_var_desc_t * av = &(file->adios_vars[varid]);
 
+	// Handle the case where there is zero or one array element 
 	void *temp_buf = NULL;
-	if (arraylen==1) { // Handle the case where there is one array element 
-		arraylen++;
+	if (arraylen==0) {
+		arraylen = 2;
+		temp_buf = (int64_t*)malloc(sizeof(int64_t)*arraylen);
+		memset(temp_buf,0,sizeof(int64_t)*arraylen);
+		array = temp_buf;
+	} else if (arraylen==1) { 
+		arraylen = 2;
 		temp_buf = PIOc_copy_one_element_adios(array,av);
 		array = temp_buf;
-	}
+	} 
 
     if (av->adios_varid == NULL)
     {
@@ -906,8 +917,6 @@ static int PIOc_write_darray_adios(
     return PIO_NOERR;
 }
 #endif
-
-
 
 /**
  * Write a distributed array to the output file.

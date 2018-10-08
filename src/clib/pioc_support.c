@@ -1866,13 +1866,17 @@ int PIOc_createfile_int(int iosysid, int *ncidp, int *iotype, const char *filena
 		if (PIO_NOERR==ierr) {
     		file->ioH = adios2_declare_io(adiosH, "E3SM_ADIOS");
 			adios2_set_engine(file->ioH,"BPFile");
-           	if (ios->num_comptasks != ios->num_iotasks)
+           	if (ios->num_comptasks != ios->num_iotasks) {
 			   	sprintf(file->params,"%d",ios->num_iotasks);
-           	else 
-			   	sprintf(file->params,"%d",ios->num_comptasks/16);
-			adios2_set_parameter(file->ioH,"substreams",&file->params);
+           	} else {
+				if (ios->num_comptasks<16) 
+					sprintf(file->params,"1");
+				else
+			   		sprintf(file->params,"%d",ios->num_comptasks/16);
+			}
+			adios2_set_parameter(file->ioH,"substreams",file->params);
 			adios2_set_parameter(file->ioH,"CollectiveMetadata","OFF");
-    		file->engineH = adios2_open(file->ioH,file->filename,adios2_mode_write);
+			file->engineH = adios2_open(file->ioH,file->filename,adios2_mode_write);
 
            	memset(file->dim_names, 0, sizeof(file->dim_names));
            	file->num_dim_vars = 0;
