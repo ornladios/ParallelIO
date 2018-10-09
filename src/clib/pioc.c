@@ -7,10 +7,6 @@
  * @see http://code.google.com/p/parallelio/
  */
 
-#ifdef _ADIOS2
-#define _ADIOS2_DEFINE_GLOBAL
-#endif 
-
 #include <config.h>
 #include <pio.h>
 #include <pio_internal.h>
@@ -760,9 +756,16 @@ int PIOc_InitDecomp_bc(int iosysid, int pio_type, int ndims, const int *gdimlen,
 }
 
 #if defined(_ADIOS) || defined(_ADIOS2)
-    /* Initialize ADIOS once */
-    static int adios_init_ref_cnt = 0;
+/* Initialize ADIOS once */
+static int adios_init_ref_cnt = 0;
 #endif
+#ifdef _ADIOS2
+static adios2_adios *adiosH;
+adios2_adios *adios2_get_adios()
+{
+	return adiosH;
+}
+#endif 
 
 /**
  * Library initialization used when IO tasks are a subset of compute
@@ -824,9 +827,7 @@ int PIOc_Init_Intracomm(MPI_Comm comp_comm, int num_iotasks, int stride, int bas
 #ifdef _ADIOS
     /* Initialize ADIOS once */
     if (!adios_init_ref_cnt)
-    {
         adios_init_noxml(comp_comm);
-    }
     adios_init_ref_cnt++;
 #endif
 #ifdef _ADIOS2
@@ -1144,9 +1145,7 @@ int PIOc_finalize(int iosysid)
 #ifdef _ADIOS
     --adios_init_ref_cnt;
     if (!adios_init_ref_cnt)
-    {
         adios_finalize(ios->comp_rank);
-    }
 #endif
 #ifdef _ADIOS2
     --adios_init_ref_cnt;

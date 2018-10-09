@@ -319,6 +319,11 @@ int PIOc_closefile(int ncid)
             file->adios_vars[i].name = NULL;
             free(file->adios_vars[i].gdimids);
             file->adios_vars[i].gdimids = NULL;
+			// Memory leak. Will fix later
+			file->adios_vars[i].adios_varid = NULL;
+			file->adios_vars[i].decomp_varid = NULL;
+			file->adios_vars[i].frame_varid = NULL;
+			file->adios_vars[i].fillval_varid = NULL;
         }
         file->num_vars = 0;
 

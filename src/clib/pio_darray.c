@@ -685,8 +685,11 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 	} else if (iodesc->maplen==0) { // Handle the case where maplen is 0
 		long   mapbuf[2];
 		size_t shape[1],start[1],count[1];
-		shape[0] = (size_t)2; start[0] = (size_t)0; count[0] = (size_t)2;
-		mapbuf[0] = 0; mapbuf[1] = 0;
+		shape[0] = 2; 
+		start[0] = 0; 
+		count[0] = 2;
+		mapbuf[0] = 0; 
+		mapbuf[1] = 0;
 		adios2_variable *variableH = adios2_define_variable(file->ioH, name, type, 1,
 							shape, start, count, adios2_constant_dims_true);
        	adios2_put(file->engineH, variableH, mapbuf, adios2_mode_sync);

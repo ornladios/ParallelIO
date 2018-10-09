@@ -2240,7 +2240,6 @@ int PIOc_def_dim(int ncid, const char *name, PIO_Offset len, int *idp)
             snprintf(dimname, sizeof(dimname), "/__pio__/dim/%s", name);
 			size_t shape[1], start[1], count[1];
 			shape[0] = 1; start[0] = 0; count[0] = 1;
-	
 			adios2_variable *variableH = adios2_inquire_variable(file->ioH,dimname);			
 			if (variableH==NULL) {
             	variableH = adios2_define_variable(file->ioH, dimname, 
@@ -2249,7 +2248,7 @@ int PIOc_def_dim(int ncid, const char *name, PIO_Offset len, int *idp)
 			} else {
 				adios2_set_selection(variableH,1,start,count);
 			}
-            file->dim_names[file->num_dim_vars] = strdup(name);
+            file->dim_names[file->num_dim_vars]  = strdup(name);
             file->dim_values[file->num_dim_vars] = len;
             *idp = file->num_dim_vars;
             ++file->num_dim_vars;

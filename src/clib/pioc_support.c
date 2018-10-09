@@ -1864,16 +1864,16 @@ int PIOc_createfile_int(int iosysid, int *ncidp, int *iotype, const char *filena
 		}
 
 		if (PIO_NOERR==ierr) {
-    		file->ioH = adios2_declare_io(adiosH, "E3SM_ADIOS");
+    		file->ioH = adios2_declare_io(adios2_get_adios(), "E3SM_ADIOS");
 			adios2_set_engine(file->ioH,"BPFile");
+			int num_adios_iotasks; // set MPI Aggregate params
            	if (ios->num_comptasks != ios->num_iotasks) {
-			   	sprintf(file->params,"%d",ios->num_iotasks);
-           	} else {
-				if (ios->num_comptasks<16) 
-					sprintf(file->params,"1");
-				else
-			   		sprintf(file->params,"%d",ios->num_comptasks/16);
+				num_adios_iotasks = ios->num_iotasks;
+			} else {
+				num_adios_iotasks = ios->num_comptasks/16;
+				if (num_adios_iotasks==0) num_adios_iotasks = 1;
 			}
+			sprintf(file->params,"%d",num_adios_iotasks);
 			adios2_set_parameter(file->ioH,"substreams",file->params);
 			adios2_set_parameter(file->ioH,"CollectiveMetadata","OFF");
 			file->engineH = adios2_open(file->ioH,file->filename,adios2_mode_write);
@@ -1894,9 +1894,7 @@ int PIOc_createfile_int(int iosysid, int *ncidp, int *iotype, const char *filena
 			file->num_attrs = 0;
 
 			size_t shape[1],start[1],count[1];
-    		shape[0] = (size_t)1;
-    		start[0] = (size_t)0;
-    		count[0] = (size_t)1;
+    		shape[0] = 1; start[0] = 0; count[0] = 1;
 			adios2_variable *variableH = adios2_define_variable(file->ioH, "/__pio__/info/nproc", 
 								adios2_type_int, 1, shape, start, count, adios2_constant_dims_true);
     		adios2_put(file->engineH, variableH, &ios->num_uniontasks, adios2_mode_sync);
@@ -2668,7 +2666,7 @@ nc_type PIOc_get_nctype_from_adios_type(adios2_type atype)
     nc_type t;
     switch (atype)
     {
-    case adios2_type_char:                t = NC_BYTE; break;
+    case adios2_type_char:                t = NC_CHAR; break;
     case adios2_type_short:               t = NC_SHORT; break;
     case adios2_type_int:                 t = NC_INT; break;
     case adios2_type_float:               t = NC_FLOAT; break;
@@ -2678,7 +2676,7 @@ nc_type PIOc_get_nctype_from_adios_type(adios2_type atype)
     case adios2_type_unsigned_int:        t = NC_UINT; break;
     case adios2_type_long_int:            t = NC_INT64; break;
     case adios2_type_unsigned_long_int:   t = NC_UINT64; break;
-    case adios2_type_string:              t = NC_CHAR; break;
+	case adios2_type_string:			  t = NC_STRING; break;
     default:                        	  t = NC_BYTE;
     }
     return t;

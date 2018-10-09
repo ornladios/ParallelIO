@@ -40,11 +40,7 @@
 #include <unistd.h>
 #include <adios2_c.h>
 #define _ADIOS_ALL_PROCS 1  /* ADIOS: assume all procs are also IO tasks */
-#ifdef _ADIOS2_DEFINE_GLOBAL
-adios2_adios *adiosH;
-#else
-extern adios2_adios *adiosH;
-#endif 
+adios2_adios *adios2_get_adios();
 #endif
 
 #ifndef MPI_OFFSET
