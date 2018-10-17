@@ -338,7 +338,7 @@ int create_mpi_datatypes(MPI_Datatype mpitype, int msgcnt,
         if (mcount[i] > 0)
         {
             int len = mcount[i] / blocksize;
-#ifdef _USE_MALLOC_
+#ifdef _USE_MALLOC_ADIOS
 			int *displace = (int*)malloc(sizeof(int)*len); 
 			if (!displace) 
 				return pio_err(NULL, NULL, PIO_ENOMEM, __FILE__, __LINE__);	
@@ -387,7 +387,7 @@ int create_mpi_datatypes(MPI_Datatype mpitype, int msgcnt,
                                                         mpitype, &mtype[i])))
                 return check_mpi(NULL, mpierr, __FILE__, __LINE__);
 
-#ifdef _USE_MALLOC_
+#ifdef _USE_MALLOC_ADIOS
 			if (displace) free(displace);
 #endif
 
@@ -1906,7 +1906,7 @@ int subset_rearrange_create(iosystem_desc_t *ios, int maplen, PIO_Offset *compma
         }
 
         /* Allocate and initialize a grid to fill in missing values. ??? */
-#ifdef _USE_MALLOC_
+#ifdef _USE_MALLOC_ADIOS
 		PIO_Offset *grid = (PIO_Offset*)malloc(sizeof(PIO_Offset)*thisgridsize[ios->io_rank]);
 		if (!grid)
 			return pio_err(ios, NULL, PIO_ENOMEM, __FILE__, __LINE__);
@@ -1969,7 +1969,7 @@ int subset_rearrange_create(iosystem_desc_t *ios, int maplen, PIO_Offset *compma
             maxregions = iodesc->maxfillregions;
         }
 
-#ifdef _USE_MALLOC_
+#ifdef _USE_MALLOC_ADIOS
 		if (grid) free(grid);
 #endif
 

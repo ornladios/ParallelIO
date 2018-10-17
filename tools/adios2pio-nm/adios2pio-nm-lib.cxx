@@ -154,11 +154,11 @@ std::vector<int> AssignWriteRanks(int n_bp_writers, MPI_Comm comm, int mpirank, 
 void ProcessGlobalFillmode(ADIOS_FILE **infile, int ncid)
 {
     int  asize;
-    void *fillmode;
+    void *fillmode = NULL;
     ADIOS_DATATYPES atype;
     adios_get_attr(infile[0], "/__pio__/fillmode", &atype, &asize, &fillmode);
     PIOc_set_fill(ncid, *(int*)fillmode, NULL);
-    free(fillmode);
+    if (fillmode) free(fillmode);
 }
 
 void ProcessVarAttributes(ADIOS_FILE **infile, int adios_varid, std::string varname, int ncid, int nc_varid)
@@ -169,7 +169,7 @@ void ProcessVarAttributes(ADIOS_FILE **infile, int adios_varid, std::string varn
 		if (debug_out)
         	cout << "    Attribute: " << infile[0]->attr_namelist[vi->attr_ids[i]] << std::endl;
         int asize;
-        char *adata;
+        char *adata = NULL;
         ADIOS_DATATYPES atype;
         adios_get_attr(infile[0], infile[0]->attr_namelist[vi->attr_ids[i]], &atype, &asize, (void**)&adata);
         nc_type piotype = PIOc_get_nctype_from_adios_type(atype);
@@ -181,7 +181,7 @@ void ProcessVarAttributes(ADIOS_FILE **infile, int adios_varid, std::string varn
         if (atype == adios_string)
             len = strlen(adata);
         PIOc_put_att(ncid, nc_varid, attname, piotype, len, adata);
-        free(adata);
+        if (adata) free(adata);	
     }
     adios_free_varinfo(vi);
 }
@@ -322,7 +322,7 @@ Decomposition ProcessOneDecomposition(ADIOS_FILE **infile, int ncid, const char 
 
    	string attname;
    	int asize;
-   	int *piotype;
+   	int *piotype = NULL;
    	ADIOS_DATATYPES atype;
    	if (forced_type == NC_NAT) {
    		 attname = string(varname) + "/piotype";
@@ -332,10 +332,10 @@ Decomposition ProcessOneDecomposition(ADIOS_FILE **infile, int ncid, const char 
    		 *piotype = forced_type;
    	}
    	attname = string(varname) + "/ndims";
-   	int *decomp_ndims;
+   	int *decomp_ndims = NULL;
    	adios_get_attr(infile[0], attname.c_str(), &atype, &asize, (void**)&decomp_ndims);
 
-   	int *decomp_dims;
+   	int *decomp_dims = NULL;
    	attname = string(varname) + "/dimlen";
    	adios_get_attr(infile[0], attname.c_str(), &atype, &asize, (void**)&decomp_dims);
    	TimerStop(read);
@@ -348,9 +348,9 @@ Decomposition ProcessOneDecomposition(ADIOS_FILE **infile, int ncid, const char 
 
 	int decomp_piotype = *piotype;
 
-   	free(piotype);
-   	free(decomp_ndims);
-   	free(decomp_dims);
+   	if (piotype) free(piotype);
+   	if (decomp_ndims) free(decomp_ndims);
+   	if (decomp_dims) free(decomp_dims);
 
     return Decomposition{ioid, decomp_piotype};
 }
@@ -661,48 +661,6 @@ int ConvertVariablePutVar(ADIOS_FILE **infile, std::vector<int> wfiles, int adio
    			adios_free_varinfo(vb);
 		}
 
-#if 0
-		if (mpirank==0) {
-			size_t mysize = 1;
-			char   *buf   = NULL;
-			adios_inq_var_blockinfo(infile[0], vi);
-			for (int d=0;d<vi->ndim;d++) 
-				mysize *= (size_t)vi->blockinfo[0].count[d];
-			mysize = mysize*adios_type_size(vi->type,NULL);
-   	    	if ((buf = (char *)malloc(mysize))==NULL) {
-				printf("ERROR: cannot allocate memory: %ld\n",mysize);
-				return 1;
-			}
-			ADIOS_SELECTION *wbsel = adios_selection_writeblock(0);
-   	    	int ret = adios_schedule_read(infile[0], wbsel, varname, 0, 1, buf);
-   	    	adios_perform_reads(infile[0], 1);
-	
-			for (int d=0;d<vi->ndim;d++) {
-				start[d] = (PIO_Offset) vi->blockinfo[0].start[d];
-   	    		count[d] = (PIO_Offset) vi->blockinfo[0].count[d];
-			}
- 			ret = put_vara_nm(ncid, var.nc_varid, var.nctype, vi->type, start, count, buf);
-   	    	if (ret != PIO_NOERR) {
-   	    		cout << "rank " << mpirank << ":ERROR in PIOc_put_vara(), code = " << ret
-   	    			 << " at " << __func__ << ":" << __LINE__ << endl;
-				return 1;
-			}
-			adios_selection_delete(wbsel);
-			if (buf) free(buf);
-		} else {
-			char temp_buf;
-			for (int d=0;d<vi->ndim;d++) {
-				start[d] = (PIO_Offset) 0;
-   	    		count[d] = (PIO_Offset) 0;
-			}
-			ret = put_vara_nm(ncid, var.nc_varid, var.nctype, vi->type, start, count, &temp_buf);
-   	    	if (ret != PIO_NOERR) {
-   	    		cout << "rank " << mpirank << ":ERROR in PIOc_put_vara(), code = " << ret
-   	    			 << " at " << __func__ << ":" << __LINE__ << endl;
-				return 1;
-			}
-		}
-#endif 
         TimerStop(write);
     }
 
@@ -1134,10 +1092,14 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 		if (n_bp_files<0) 
 			throw std::runtime_error("Input folder doesn't exist.\n");
 
+		printf("Number of files: %d %d\n",n_bp_files,nproc); fflush(stdout);
+
 		if (nproc>n_bp_files) {
 			if (debug_out) std::cout << "ERROR: nproc (" << nproc << ") is greater than #files (" << n_bp_files << ")" << std::endl;
 			throw std::runtime_error("Use fewer processors.\n");
 		}
+
+		printf("Infile: %s\n",infilepath.c_str());
 
 		/* Number of BP file writers != number of converter processes here */
         std::vector<int> wfiles;
@@ -1146,6 +1108,7 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
         	for (auto nb: wfiles)
             	printf("Myrank: %d File id: %d\n",mpirank,nb);
 		}
+		printf("Infile: %s\n",infilepath.c_str());
 
 		num_infiles = wfiles.size()+1; //  infile[0] is opened by all processors
 		infile = (ADIOS_FILE **)malloc(num_infiles*sizeof(ADIOS_FILE *));
@@ -1155,6 +1118,7 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 		string file0 = infilepath + ".dir/" + basefilename + ".0";
 		if (debug_out) printf("FILE0: %s\n",file0.c_str()); fflush(stdout);
 		infile[0] = adios_read_open_file(file0.c_str(), ADIOS_READ_METHOD_BP, comm);
+		if (debug_out) printf("AFTER FILE0: %s\n",file0.c_str()); fflush(stdout);
 		if (infile[0]==NULL) { 
 			printf("ERROR: file open returned an error.\n");
 			fflush(stdout);
@@ -1163,6 +1127,7 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 		if (ret)
 			throw std::runtime_error("Invalid BP file: missing '/__pio__/info/nproc' variable\n");
 		adios_perform_reads(infile[0], 1);
+		if (debug_out) printf("AFTER AFTER FILE0: %s %d\n",file0.c_str(),n_bp_writers); fflush(stdout);
 		if (n_bp_writers!=n_bp_files) {
 			if (debug_out) std::cout  << "WARNING: #writers (" 
 					<< n_bp_writers << ") != #files (" 
@@ -1236,7 +1201,7 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 					TimerStart(read);
 					string attname = string(infile[0]->var_namelist[i]) + "/__pio__/ncop";
 					int asize;
-					char *ncop;
+					char *ncop = NULL;
 					ADIOS_DATATYPES atype;
 					adios_get_attr(infile[0], attname.c_str(), &atype, &asize, (void**)&ncop);
 					TimerStop(read);
@@ -1258,7 +1223,7 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 						if (!mpirank && debug_out)
 							cout << "  WARNING: unknown operation " << op << ". Will not process this variable\n";
 					}
-					free(ncop);
+					if (ncop) free(ncop);
 				}
 			}
 			FlushStdout_nm(comm);

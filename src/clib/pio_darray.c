@@ -456,7 +456,7 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 		}
     	int64_t vid = adios_define_var(file->adios_group, name, "", type, ldim,"","");
     	adios_write_byid(file->adios_fh, vid, mapbuf);
-		free(mapbuf);
+		if (mapbuf) free(mapbuf);
 	}
 
 	/* ADIOS: assume all procs are also IO tasks */
@@ -539,20 +539,20 @@ static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc,
     memcpy(temp_buf,array,sizeof(var_type)); \
 }
 
-void *PIOc_copy_one_element_adios(void *array, adios_var_desc_t *av) 
+void *PIOc_copy_one_element_adios(void *array, io_desc_t *iodesc) 
 {
 	void *temp_buf = NULL;
-	if (av->nc_type==PIO_DOUBLE) {
+	if (iodesc->piotype==PIO_DOUBLE) {
 		ADIOS_COPY_ONE(temp_buf,array,double);
-	} else if (av->nc_type==PIO_FLOAT || av->nc_type==PIO_REAL) {
+	} else if (iodesc->piotype==PIO_FLOAT || iodesc->piotype==PIO_REAL) {
 		ADIOS_COPY_ONE(temp_buf,array,float);
-	} else if (av->nc_type==PIO_INT || av->nc_type==PIO_UINT) {
+	} else if (iodesc->piotype==PIO_INT || iodesc->piotype==PIO_UINT) {
 		ADIOS_COPY_ONE(temp_buf,array,int);
-	} else if (av->nc_type==PIO_SHORT || av->nc_type==PIO_USHORT) {
+	} else if (iodesc->piotype==PIO_SHORT || iodesc->piotype==PIO_USHORT) {
 		ADIOS_COPY_ONE(temp_buf,array,short int);
-	} else if (av->nc_type==PIO_INT64 || av->nc_type==PIO_UINT64) {
+	} else if (iodesc->piotype==PIO_INT64 || iodesc->piotype==PIO_UINT64) {
 		ADIOS_COPY_ONE(temp_buf,array,int64_t);
-	} else if (av->nc_type==PIO_CHAR || av->nc_type==PIO_BYTE || av->nc_type==PIO_UBYTE) {
+	} else if (iodesc->piotype==PIO_CHAR || iodesc->piotype==PIO_BYTE || iodesc->piotype==PIO_UBYTE) {
 		ADIOS_COPY_ONE(temp_buf,array,char);
 	}
 	return temp_buf;
@@ -571,7 +571,7 @@ static int PIOc_write_darray_adios(
 	void *temp_buf = NULL;
 	if (arraylen==1) { // Handle the case where there is one array element 
 		arraylen++;
-		temp_buf = PIOc_copy_one_element_adios(array,av);
+		temp_buf = PIOc_copy_one_element_adios(array,iodesc);
 		array = temp_buf;
 	}
 

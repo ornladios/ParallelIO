@@ -851,7 +851,7 @@ enum PIO_ERROR_HANDLERS
 #define PIO_EADIOSREAD  (-300)
 
 /** Define dynamic memory allocation */
-#define _USE_MALLOC_    1
+#define _USE_MALLOC_ADIOS    1
 #endif
 
 /** ??? */

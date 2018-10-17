@@ -167,7 +167,7 @@ PIO_Offset GCDblocksize(int arrlen, const PIO_Offset *arr_in)
     PIO_Offset bsizeg;    /* Size of gap block. */
     PIO_Offset blklensum; /* Sum of all block lengths. */
 
-#ifdef _USE_MALLOC_
+#ifdef _USE_MALLOC_ADIOS
 	PIO_Offset *del_arr = (PIO_Offset*)malloc(sizeof(PIO_Offset)*(arrlen-1));
     pioassert(del_arr!=NULL, "cannot allocate del_arr", __FILE__, __LINE__);
 	PIO_Offset *loc_arr = (PIO_Offset*)malloc(sizeof(PIO_Offset)*(arrlen-1));
@@ -207,7 +207,7 @@ PIO_Offset GCDblocksize(int arrlen, const PIO_Offset *arr_in)
     bsize = (PIO_Offset)arrlen;
     if (numblks > 1)
     {
-#ifdef _USE_MALLOC_
+#ifdef _USE_MALLOC_ADIOS
 		PIO_Offset *blk_len = (PIO_Offset*)malloc(sizeof(PIO_Offset)*numblks);
     	pioassert(blk_len!=NULL, "cannot allocate blk_len", __FILE__, __LINE__);
 		PIO_Offset *gaps = (PIO_Offset*)malloc(sizeof(PIO_Offset)*numtimes);
@@ -262,14 +262,14 @@ PIO_Offset GCDblocksize(int arrlen, const PIO_Offset *arr_in)
         if (arr_in[0] > 0)
             bsize = lgcd(bsize, arr_in[0]);
 
-#ifdef _USE_MALLOC_
+#ifdef _USE_MALLOC_ADIOS
 		if (blk_len) free(blk_len);
 		if (gaps) free(gaps);
 #endif 
 
     }
 
-#ifdef _USE_MALLOC_
+#ifdef _USE_MALLOC_ADIOS
 	if (del_arr) free(del_arr);
 	if (loc_arr) free(loc_arr);
 #endif

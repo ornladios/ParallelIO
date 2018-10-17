@@ -200,8 +200,18 @@ int write_darray_multi_par(file_desc_t *file, int nvars, int fndims, const int *
         size_t start[fndims];
         size_t count[fndims];
         int ndims = iodesc->ndims;
+
+#ifdef _USE_MALLOC_ADIOS // allocation of startlist, countlist in stack memory causes issues
+        PIO_Offset **startlist; /* Array of start arrays for ncmpi_iput_varn(). */
+        PIO_Offset **countlist; /* Array of count  arrays for ncmpi_iput_varn(). */
+		startlist = (PIO_Offset**)malloc(sizeof(PIO_Offset*)*num_regions);
+		if (!startlist) return pio_err(ios, file, ierr, __FILE__, __LINE__);
+		countlist = (PIO_Offset**)malloc(sizeof(PIO_Offset*)*num_regions);
+		if (!countlist) return pio_err(ios, file, ierr, __FILE__, __LINE__);
+#else
         PIO_Offset *startlist[num_regions]; /* Array of start arrays for ncmpi_iput_varn(). */
         PIO_Offset *countlist[num_regions]; /* Array of count  arrays for ncmpi_iput_varn(). */
+#endif
 
         LOG((3, "num_regions = %d", num_regions));
 
@@ -373,6 +383,12 @@ int write_darray_multi_par(file_desc_t *file, int nvars, int fndims, const int *
             if (region)
                 region = region->next;
         } /* next regioncnt */
+
+#ifdef _USE_MALLOC_ADIOS /* allocation in stack memory causes issues */
+		if (startlist) free(startlist);
+		if (countlist) free(countlist);
+#endif 
+
     } /* endif (ios->ioproc) */
 
     /* Check the return code from the netCDF/pnetcdf call. */
