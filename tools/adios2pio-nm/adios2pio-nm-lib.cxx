@@ -343,7 +343,7 @@ Decomposition ProcessOneDecomposition(ADIOS_FILE **infile, int ncid, const char 
    	TimerStart(write);
    	int ioid;
    	PIOc_InitDecomp(iosysid, *piotype, *decomp_ndims, decomp_dims, (PIO_Offset)nelems,
-   		     		d.data(), &ioid, NULL, NULL, NULL);
+					d.data(), &ioid, NULL, NULL, NULL);
    	TimerStop(write);
 
 	int decomp_piotype = *piotype;
@@ -848,7 +848,7 @@ int ConvertVariableTimedPutVar(ADIOS_FILE **infile, std::vector<int> wfiles, int
 
 int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variable& var,
         std::vector<int>& wfiles, DecompositionMap& decomp_map, int nblocks_per_step, int iosysid,
-		MPI_Comm comm, int mpirank, int nproc)
+		MPI_Comm comm, int mpirank, int nproc, int mem_opt)
 {
     int ret = 0;
 
@@ -994,11 +994,22 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
         TimerStop(read);
 
         TimerStart(write);
-		sprintf(decompname,"%d",decomp_id);
-    	Decomposition decomp = decomp_map[decompname];
+		Decomposition decomp;
+		if (mem_opt) {
+			sprintf(decompname,"/__pio__/decomp/%d",decomp_id);
+        	decomp = ProcessOneDecomposition(infile, ncid, decompname, wfiles, iosysid, mpirank, nproc);
+		} else {
+			sprintf(decompname,"%d",decomp_id);
+			decomp = decomp_map[decompname];
+		} 
     	if (decomp.piotype != var.nctype) {
        		/* Type conversion may happened at writing. Now we make a new decomposition for this nctype */
-        	decomp = GetNewDecomposition(decomp_map, decompname, infile, ncid, wfiles, var.nctype, iosysid, mpirank, nproc);
+			if (mem_opt) {
+				PIOc_freedecomp(iosysid,decomp.ioid);
+        		decomp = ProcessOneDecomposition(infile, ncid, decompname, wfiles, iosysid, mpirank, nproc, var.nctype);
+			} else {
+        		decomp = GetNewDecomposition(decomp_map, decompname, infile, ncid, wfiles, var.nctype, iosysid, mpirank, nproc);
+			} 
 		}
 		if (frame_id<0) frame_id = 0;
         if (wfiles[0] < nblocks_per_step)
@@ -1014,6 +1025,10 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
 						d.data(), NULL); 
 			}
         }
+		if (mem_opt) {
+			PIOc_sync(ncid); 
+			PIOc_freedecomp(iosysid,decomp.ioid);
+		}
         TimerStop(write);
     }
     adios_free_varinfo(vi);
@@ -1064,7 +1079,7 @@ std::string ExtractPathname(std::string pathname)
 	}
 }
 
-void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int iosysid, MPI_Comm comm, int mpirank, int nproc)
+void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int iosysid, MPI_Comm comm, int mpirank, int nproc, int mem_opt)
 {
 	ADIOS_FILE **infile = NULL;
 	int num_infiles = 0; 
@@ -1092,14 +1107,10 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 		if (n_bp_files<0) 
 			throw std::runtime_error("Input folder doesn't exist.\n");
 
-		printf("Number of files: %d %d\n",n_bp_files,nproc); fflush(stdout);
-
 		if (nproc>n_bp_files) {
 			if (debug_out) std::cout << "ERROR: nproc (" << nproc << ") is greater than #files (" << n_bp_files << ")" << std::endl;
 			throw std::runtime_error("Use fewer processors.\n");
 		}
-
-		printf("Infile: %s\n",infilepath.c_str());
 
 		/* Number of BP file writers != number of converter processes here */
         std::vector<int> wfiles;
@@ -1108,7 +1119,6 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
         	for (auto nb: wfiles)
             	printf("Myrank: %d File id: %d\n",mpirank,nb);
 		}
-		printf("Infile: %s\n",infilepath.c_str());
 
 		num_infiles = wfiles.size()+1; //  infile[0] is opened by all processors
 		infile = (ADIOS_FILE **)malloc(num_infiles*sizeof(ADIOS_FILE *));
@@ -1154,9 +1164,6 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 			if (debug_out) std::cout << "myrank " << mpirank << " file: " << filei << std::endl;
 		}
 
-		/* First process decompositions */
-		DecompositionMap decomp_map = ProcessDecompositions(infile, ncid, wfiles,iosysid,comm, mpirank, nproc);
-
 		/* Create output file */
 		TimerStart(write);
 		/* 
@@ -1167,6 +1174,10 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 		TimerStop(write);
 		if (ret)
 			throw std::runtime_error("Could not create output file " + outfilename + "\n");
+
+		/* First process decompositions */
+		DecompositionMap decomp_map;
+		if (!mem_opt) decomp_map = ProcessDecompositions(infile, ncid, wfiles,iosysid,comm, mpirank, nproc);
 
 		/* Process the global fillmode */
 		ProcessGlobalFillmode(infile, ncid);
@@ -1205,7 +1216,7 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 					ADIOS_DATATYPES atype;
 					adios_get_attr(infile[0], attname.c_str(), &atype, &asize, (void**)&ncop);
 					TimerStop(read);
-	
+
 					std::string op(ncop);
 					if (op == "put_var") {
 						if (var.is_timed) {
@@ -1218,7 +1229,7 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 					} else if (op == "darray") {
 						/* Variable was written with pio_write_darray() with a decomposition */
 						if (debug_out) printf("ConvertVariableDarray: %d\n",mpirank); fflush(stdout);
-						ConvertVariableDarray(infile, i, ncid, var, wfiles, decomp_map, n_bp_writers,iosysid, comm, mpirank, nproc);
+						ConvertVariableDarray(infile, i, ncid, var, wfiles, decomp_map, n_bp_writers, iosysid, comm, mpirank, nproc, mem_opt);
 					} else {
 						if (!mpirank && debug_out)
 							cout << "  WARNING: unknown operation " << op << ". Will not process this variable\n";
@@ -1266,9 +1277,10 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 
 void usage_nm(string prgname)
 {
-        cout << "Usage: " << prgname << " bp_file  nc_file  pio_io_type\n";
+        cout << "Usage: " << prgname << " bp_file  nc_file  pio_io_type memory_opt\n";
         cout << "   bp file   :  data produced by PIO with ADIOS format\n";
         cout << "   nc file   :  output file name after conversion\n";
+        cout << "   memory opt:  (0/1) reduce memory usage. Reduces execution speed.\n";
         cout << "   pio format:  output PIO_IO_TYPE. Supported parameters:\n";
         cout << "                pnetcdf  netcdf  netcdf4c  netcdf4p   or:\n";
         cout << "                   1       2        3         4\n";
@@ -1300,7 +1312,7 @@ enum PIO_IOTYPE GetIOType_nm(string t)
     return iotype;
 }
 
-int ConvertBPToNC(string infilepath, string outfilename, string piotype, MPI_Comm comm_in)
+int ConvertBPToNC(string infilepath, string outfilename, string piotype, int mem_opt, MPI_Comm comm_in)
 {
 	int ret = 0;
 	int iosysid = 0;
@@ -1313,6 +1325,12 @@ int ConvertBPToNC(string infilepath, string outfilename, string piotype, MPI_Com
     MPI_Comm_set_errhandler(w_comm, MPI_ERRORS_RETURN);
     MPI_Comm_rank(w_comm, &w_mpirank);
     MPI_Comm_size(w_comm, &w_nproc);
+
+	if (mem_opt) 
+		printf("INFO: Option selected to reduce memory usage. Execution time will likely increase.\n");
+	else
+		printf("INFO: Reduce memory usage option is set to 0.\n");
+	fflush(stdout);
 
 	/* 
  	 * Check if the number of nodes is less than or equal to the number of BP files.
@@ -1342,7 +1360,7 @@ int ConvertBPToNC(string infilepath, string outfilename, string piotype, MPI_Com
 		if (io_proc) {
         	enum PIO_IOTYPE pio_iotype = GetIOType_nm(piotype);
         	iosysid = InitPIO(comm,mpirank,nproc);
-        	ConvertBPFile(infilepath, outfilename, pio_iotype, iosysid,comm, mpirank, nproc);
+        	ConvertBPFile(infilepath, outfilename, pio_iotype, iosysid, comm, mpirank, nproc, mem_opt);
         	PIOc_finalize(iosysid);
         	TimerReport_nm(comm);
 		}
@@ -1363,9 +1381,9 @@ int ConvertBPToNC(string infilepath, string outfilename, string piotype, MPI_Com
 extern "C" {
 #endif
 
-int C_API_ConvertBPToNC(const char *infilepath, const char *outfilename, const char *piotype, MPI_Comm comm_in)
+int C_API_ConvertBPToNC(const char *infilepath, const char *outfilename, const char *piotype, int mem_opt, MPI_Comm comm_in)
 {
-    return ConvertBPToNC(string(infilepath), string(outfilename), string(piotype), comm_in);
+    return ConvertBPToNC(string(infilepath), string(outfilename), string(piotype), mem_opt, comm_in);
 }
 
 #ifdef __cplusplus
