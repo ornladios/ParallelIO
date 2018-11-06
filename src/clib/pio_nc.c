@@ -33,9 +33,6 @@ int adios2_type_size(adios2_type type, const void *var)
             else
                 return strlen ((const char *) var) + 1;
 
-        case adios2_type_string_array:
-            return sizeof(char*);
-
         case adios2_type_short:
         case adios2_type_unsigned_short:
             return 2;
@@ -2405,7 +2402,7 @@ int PIOc_def_var(int ncid, const char *name, nc_type xtype, int ndims,
             			char* dimnames[6];
             			for (int i = 0; i < av->ndims; i++)
                				dimnames[i] = file->dim_names[av->gdimids[i]];
-            			adios_define_attribute_byvalue(file->adios_group,"__pio__/dims",av->name,adios_string_array,
+            			adios_define_attribute_byvalue(file->adios_group,"__pio__/dims",av->name,adios_string,
 														av->ndims,dimnames);
 					}
          		}
@@ -2437,17 +2434,17 @@ int PIOc_def_var(int ncid, const char *name, nc_type xtype, int ndims,
 					char att_name[64];
 					sprintf(att_name,"%s/__pio__/ndims",av->name);
 					if (adios2_inquire_attribute(file->ioH,att_name)==NULL) 
-						adios2_define_attribute(file->ioH,att_name,adios2_type_int,&av->ndims,1);
+						adios2_define_attribute(file->ioH,att_name,adios2_type_int,&av->ndims);
 					sprintf(att_name,"%s/__pio__/nctype",av->name);
 					if (adios2_inquire_attribute(file->ioH,att_name)==NULL) 
-						adios2_define_attribute(file->ioH,att_name,adios2_type_int,&av->nc_type,1);
+						adios2_define_attribute(file->ioH,att_name,adios2_type_int,&av->nc_type);
 					if (av->ndims!=0) { /* If zero dimensions, do not write out __pio__/dims */
             			char* dimnames[6];
             			for (int i = 0; i < av->ndims; i++) 
                				dimnames[i] = file->dim_names[av->gdimids[i]];
 						sprintf(att_name,"%s/__pio__/dims",av->name);
 						if (adios2_inquire_attribute(file->ioH,att_name)==NULL) {
-							adios2_define_attribute(file->ioH,att_name,adios2_type_string_array,dimnames,av->ndims);
+							adios2_define_attribute_array(file->ioH,att_name,adios2_type_string,dimnames,av->ndims);
 						}
 					}
          		}

@@ -542,20 +542,20 @@ static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc,
     memcpy(temp_buf,array,sizeof(var_type)); \
 }
 
-void *PIOc_copy_one_element_adios(void *array, adios_var_desc_t *av) 
+void *PIOc_copy_one_element_adios(void *array, io_desc_t *iodesc) 
 {
 	void *temp_buf = NULL;
-	if (av->nc_type==PIO_DOUBLE) {
+	if (iodesc->piotype==PIO_DOUBLE) {
 		ADIOS_COPY_ONE(temp_buf,array,double);
-	} else if (av->nc_type==PIO_FLOAT || av->nc_type==PIO_REAL) {
+	} else if (iodesc->piotype==PIO_FLOAT || iodesc->piotype==PIO_REAL) {
 		ADIOS_COPY_ONE(temp_buf,array,float);
-	} else if (av->nc_type==PIO_INT || av->nc_type==PIO_UINT) {
+	} else if (iodesc->piotype==PIO_INT || iodesc->piotype==PIO_UINT) {
 		ADIOS_COPY_ONE(temp_buf,array,int);
-	} else if (av->nc_type==PIO_SHORT || av->nc_type==PIO_USHORT) {
+	} else if (iodesc->piotype==PIO_SHORT || iodesc->piotype==PIO_USHORT) {
 		ADIOS_COPY_ONE(temp_buf,array,short int);
-	} else if (av->nc_type==PIO_INT64 || av->nc_type==PIO_UINT64) {
+	} else if (iodesc->piotype==PIO_INT64 || iodesc->piotype==PIO_UINT64) {
 		ADIOS_COPY_ONE(temp_buf,array,int64_t);
-	} else if (av->nc_type==PIO_CHAR || av->nc_type==PIO_BYTE || av->nc_type==PIO_UBYTE) {
+	} else if (iodesc->piotype==PIO_CHAR || iodesc->piotype==PIO_BYTE || iodesc->piotype==PIO_UBYTE) {
 		ADIOS_COPY_ONE(temp_buf,array,char);
 	}
 	return temp_buf;
@@ -574,7 +574,7 @@ static int PIOc_write_darray_adios(
 	void *temp_buf = NULL;
 	if (arraylen==1) { // Handle the case where there is one array element 
 		arraylen++;
-		temp_buf = PIOc_copy_one_element_adios(array,av);
+		temp_buf = PIOc_copy_one_element_adios(array,iodesc);
 		array = temp_buf;
 	}
 
@@ -683,6 +683,7 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
 									shape, start, count, adios2_constant_dims_true);
    		adios2_put(file->engineH, variableH, iodesc->map, adios2_mode_sync);
 	} else if (iodesc->maplen==0) { // Handle the case where maplen is 0
+		printf("No elements in decomp array.\n"); fflush(stdout);
 		long   mapbuf[2];
 		size_t shape[1],start[1],count[1];
 		shape[0] = 2; 
@@ -725,11 +726,11 @@ static void PIOc_write_decomp_adios(file_desc_t *file, int ioid)
    	{
 		char att_name[64];
 		sprintf(att_name,"%s/piotype",name);
-		adios2_define_attribute(file->ioH,att_name,adios2_type_int,&iodesc->piotype,1);
+		adios2_define_attribute(file->ioH,att_name,adios2_type_int,&iodesc->piotype);
 		sprintf(att_name,"%s/ndims",name);
-		adios2_define_attribute(file->ioH,att_name,adios2_type_int,&iodesc->ndims,1);
+		adios2_define_attribute(file->ioH,att_name,adios2_type_int,&iodesc->ndims);
 		sprintf(att_name,"%s/dimlen",name);
-		adios2_define_attribute(file->ioH,att_name,adios2_type_int,iodesc->dimlen,iodesc->ndims);
+		adios2_define_attribute_array(file->ioH,att_name,adios2_type_int,iodesc->dimlen,iodesc->ndims);
    	}
 }
 
@@ -804,20 +805,20 @@ static void *PIOc_convert_buffer_adios(file_desc_t *file, io_desc_t *iodesc,
     memcpy(temp_buf,array,sizeof(var_type)); \
 }
 
-void *PIOc_copy_one_element_adios(void *array, adios_var_desc_t *av) 
+void *PIOc_copy_one_element_adios(void *array, io_desc_t *iodesc) 
 {
 	void *temp_buf = NULL;
-	if (av->nc_type==PIO_DOUBLE) {
+	if (iodesc->piotype==PIO_DOUBLE) {
 		ADIOS_COPY_ONE(temp_buf,array,double);
-	} else if (av->nc_type==PIO_FLOAT || av->nc_type==PIO_REAL) {
+	} else if (iodesc->piotype==PIO_FLOAT || iodesc->piotype==PIO_REAL) {
 		ADIOS_COPY_ONE(temp_buf,array,float);
-	} else if (av->nc_type==PIO_INT || av->nc_type==PIO_UINT) {
+	} else if (iodesc->piotype==PIO_INT || iodesc->piotype==PIO_UINT) {
 		ADIOS_COPY_ONE(temp_buf,array,int);
-	} else if (av->nc_type==PIO_SHORT || av->nc_type==PIO_USHORT) {
+	} else if (iodesc->piotype==PIO_SHORT || iodesc->piotype==PIO_USHORT) {
 		ADIOS_COPY_ONE(temp_buf,array,short int);
-	} else if (av->nc_type==PIO_INT64 || av->nc_type==PIO_UINT64) {
+	} else if (iodesc->piotype==PIO_INT64 || iodesc->piotype==PIO_UINT64) {
 		ADIOS_COPY_ONE(temp_buf,array,int64_t);
-	} else if (av->nc_type==PIO_CHAR || av->nc_type==PIO_BYTE || av->nc_type==PIO_UBYTE) {
+	} else if (iodesc->piotype==PIO_CHAR || iodesc->piotype==PIO_BYTE || iodesc->piotype==PIO_UBYTE) {
 		ADIOS_COPY_ONE(temp_buf,array,char);
 	}
 	return temp_buf;
@@ -836,13 +837,14 @@ static int PIOc_write_darray_adios(
 	// Handle the case where there is zero or one array element 
 	void *temp_buf = NULL;
 	if (arraylen==0) {
+		printf("Arraylen is zero.\n");
 		arraylen = 2;
 		temp_buf = (int64_t*)malloc(sizeof(int64_t)*arraylen);
 		memset(temp_buf,0,sizeof(int64_t)*arraylen);
 		array = temp_buf;
 	} else if (arraylen==1) { 
 		arraylen = 2;
-		temp_buf = PIOc_copy_one_element_adios(array,av);
+		temp_buf = PIOc_copy_one_element_adios(array,iodesc);
 		array = temp_buf;
 	} 
 
@@ -873,9 +875,9 @@ static int PIOc_write_darray_adios(
             char decompname[32], att_name[64];
             sprintf(decompname, "%d", ioid);
 			sprintf(att_name,"%s/__pio__/decomp",av->name);
-			adios2_define_attribute(file->ioH,att_name,adios2_type_string,decompname,1);
+			adios2_define_attribute(file->ioH,att_name,adios2_type_string,decompname);
 			sprintf(att_name,"%s/__pio__/ncop",av->name);
-			adios2_define_attribute(file->ioH,att_name,adios2_type_string,"darray",1);
+			adios2_define_attribute(file->ioH,att_name,adios2_type_string,"darray");
         }
     }
 	

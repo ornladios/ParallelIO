@@ -1871,9 +1871,10 @@ int PIOc_createfile_int(int iosysid, int *ncidp, int *iotype, const char *filena
 				num_adios_iotasks = ios->num_iotasks;
 			} else {
 				num_adios_iotasks = ios->num_comptasks/16;
-				if (num_adios_iotasks==0) num_adios_iotasks = 1;
+				if (num_adios_iotasks==0) num_adios_iotasks = 2;
 			}
 			sprintf(file->params,"%d",num_adios_iotasks);
+			printf("num of iotasks: %d\n",num_adios_iotasks);
 			adios2_set_parameter(file->ioH,"substreams",file->params);
 			adios2_set_parameter(file->ioH,"CollectiveMetadata","OFF");
 			file->engineH = adios2_open(file->ioH,file->filename,adios2_mode_write);

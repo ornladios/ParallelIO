@@ -221,7 +221,7 @@ int PIOc_put_att_tc(int ncid, int varid, const char *name, nc_type atttype,
 			
 			char att_name[256];
 			sprintf(att_name,"%s/%s",path,name);
-            adios2_define_attribute(file->ioH, att_name, adios_type, op, 1);
+            adios2_define_attribute(file->ioH, att_name, adios_type, op);
             ierr = 0;
     }
 #endif
@@ -1181,7 +1181,7 @@ int PIOc_put_vars_tc(int ncid, int varid, const PIO_Offset *start, const PIO_Off
                     {
                         dimnames[i] = file->dim_names[av->gdimids[i]];
                     }
-                    adios_define_attribute_byvalue(file->adios_group,"__pio__/dims",av->name,adios_string_array,av->ndims,dimnames);
+                    adios_define_attribute_byvalue(file->adios_group,"__pio__/dims",av->name,adios_string,av->ndims,dimnames);
                 }
             }
             else
@@ -1242,7 +1242,7 @@ int PIOc_put_vars_tc(int ncid, int varid, const PIO_Offset *start, const PIO_Off
                 {
                     dimnames[i] = file->dim_names[av->gdimids[i]];
                 }
-                adios_define_attribute_byvalue(file->adios_group,"__pio__/dims",av->name,adios_string_array,av->ndims,dimnames);
+                adios_define_attribute_byvalue(file->adios_group,"__pio__/dims",av->name,adios_string,av->ndims,dimnames);
             }
 
 			if (file->adios_iomaster == MPI_ROOT)
@@ -1329,7 +1329,7 @@ int PIOc_put_vars_tc(int ncid, int varid, const PIO_Offset *start, const PIO_Off
                         dimnames[i] = file->dim_names[av->gdimids[i]];
 					char att_name[128];
 					sprintf(att_name,"%s/__pio__/dims",av->name);
-					adios2_define_attribute(file->ioH,att_name,adios2_type_string_array,dimnames,av->ndims);
+					adios2_define_attribute_array(file->ioH,att_name,adios2_type_string,dimnames,av->ndims);
                 }
             }
             else
@@ -1374,7 +1374,7 @@ int PIOc_put_vars_tc(int ncid, int varid, const PIO_Offset *start, const PIO_Off
 				char att_name[128];
                 sprintf(att_name,"%s/__pio__/dims",av->name);
 				if (adios2_inquire_attribute(file->ioH,att_name)==NULL) 
-                	adios2_define_attribute(file->ioH,att_name,adios2_type_string_array,dimnames,av->ndims);
+                	adios2_define_attribute_array(file->ioH,att_name,adios2_type_string,dimnames,av->ndims);
             }
 
 			if (file->adios_iomaster == MPI_ROOT)
@@ -1382,13 +1382,13 @@ int PIOc_put_vars_tc(int ncid, int varid, const PIO_Offset *start, const PIO_Off
 				char att_name[128];
                 sprintf(att_name,"%s/__pio__/ndims",av->name);
 				if (adios2_inquire_attribute(file->ioH,att_name)==NULL) 
-                	adios2_define_attribute(file->ioH,att_name,adios2_type_int,&av->ndims,1);
+                	adios2_define_attribute(file->ioH,att_name,adios2_type_int,&av->ndims);
                 sprintf(att_name,"%s/__pio__/nctype",av->name);
 				if (adios2_inquire_attribute(file->ioH,att_name)==NULL) 
-                	adios2_define_attribute(file->ioH,att_name,adios2_type_int,&av->nc_type,1);
+                	adios2_define_attribute(file->ioH,att_name,adios2_type_int,&av->nc_type);
                 sprintf(att_name,"%s/__pio__/ncop",av->name);
 				if (adios2_inquire_attribute(file->ioH,att_name)==NULL) 
-                	adios2_define_attribute(file->ioH,att_name,adios2_type_string,"put_var",1);
+                	adios2_define_attribute(file->ioH,att_name,adios2_type_string,"put_var");
             }
     }
 #endif

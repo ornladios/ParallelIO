@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
     PIOc_closefile(ncid);
   }
 
-  free(buffer);
+  if (buffer) free(buffer);
 
   PIOc_freedecomp(iosysid, ioid);
 
