@@ -81,6 +81,10 @@ ADD_EXECUTABLE(example_scalar_char_var example_scalar_char_var.c)
 TARGET_LINK_LIBRARIES(example_scalar_char_var pioc)
 add_dependencies(tests example_scalar_char_var)
 
+ADD_EXECUTABLE(example_num_frames example_num_frames.c)
+TARGET_LINK_LIBRARIES(example_num_frames pioc)
+add_dependencies(tests example_num_frames)
+
 ###-------------------------------------------------------------------------###
 ### CMakeList.txt for examples using pio
 ###-------------------------------------------------------------------------###

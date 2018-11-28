@@ -88,7 +88,7 @@ using DimensionMap = std::map<std::string,Dimension>;
 
 struct Variable {
     int nc_varid;
-    bool is_timed;
+    PIO_Offset is_timed;
     nc_type nctype;
 };
 
@@ -452,7 +452,7 @@ VariableMap ProcessVariableDefinitions(ADIOS_FILE **infile, int ncid, DimensionM
 
 	            char **dimnames = NULL;
 	            int dimids[MAX_NC_DIMS];
-	            bool timed = false;
+	            PIO_Offset timed = 0;
 	            if (*ndims)
 	            {
 	                attname = string(infile[0]->var_namelist[i]) + "/__pio__/dims";
@@ -461,9 +461,9 @@ VariableMap ProcessVariableDefinitions(ADIOS_FILE **infile, int ncid, DimensionM
 	                for (int d=0; d < *ndims; d++)
 	                {
 	                    dimids[d] = dimension_map[dimnames[d]].dimid;
-	                    if (dimension_map[dimnames[d]].dimvalue == PIO_UNLIMITED)
+	                    if (dimension_map[dimnames[d]].dimvalue == PIO_UNLIMITED || dimension_map[dimnames[d]].dimvalue>0)
 	                    {
-                        	timed = true;
+                        	timed = dimension_map[dimnames[d]].dimvalue;
 	                    }
 	                }
 	            }
@@ -596,7 +596,7 @@ int ConvertVariablePutVar(ADIOS_FILE **infile, std::vector<int> wfiles, int adio
     {
         /* Scalar variable */
         TimerStart(write);
-        int ret = put_var_nm(ncid, var.nc_varid, var.nctype, vi->type, vi->value);
+        ret = put_var_nm(ncid, var.nc_varid, var.nctype, vi->type, vi->value);
         if (ret != PIO_NOERR)
                 cout << "ERROR in PIOc_put_var(), code = " << ret
                      << " at " << __func__ << ":" << __LINE__ << endl;
@@ -634,7 +634,10 @@ int ConvertVariablePutVar(ADIOS_FILE **infile, std::vector<int> wfiles, int adio
 						start[d] = (PIO_Offset) vb->blockinfo[ii].start[d];
        					count[d] = (PIO_Offset) vb->blockinfo[ii].count[d];
 					}
- 					ret = put_vara_nm(ncid, var.nc_varid, var.nctype, vb->type, start, count, buf);
+					if (vi->ndim==1 && start[0]==0 && count[0]==1) 
+						ret = put_var_nm(ncid, var.nc_varid, var.nctype, vb->type, buf);
+					else 
+ 						ret = put_vara_nm(ncid, var.nc_varid, var.nctype, vb->type, start, count, buf);
        				if (ret != PIO_NOERR) {
        					cout << "rank " << mpirank << ":ERROR in PIOc_put_vara(), code = " << ret
        						 << " at " << __func__ << ":" << __LINE__ << endl;
@@ -650,7 +653,10 @@ int ConvertVariablePutVar(ADIOS_FILE **infile, std::vector<int> wfiles, int adio
 						start[d] = (PIO_Offset) 0;
        					count[d] = (PIO_Offset) 0;
 					}
- 					ret = put_vara_nm(ncid, var.nc_varid, var.nctype, vb->type, start, count, &temp_buf);
+					if (vi->ndim==1)  
+						ret = put_var_nm(ncid, var.nc_varid, var.nctype, vb->type, &temp_buf);
+					else 
+ 						ret = put_vara_nm(ncid, var.nc_varid, var.nctype, vb->type, start, count, &temp_buf);
        				if (ret != PIO_NOERR) {
        					cout << "rank " << mpirank << ":ERROR in PIOc_put_vara(), code = " << ret
        						 << " at " << __func__ << ":" << __LINE__ << endl;
@@ -714,7 +720,7 @@ int ConvertVariableTimedPutVar(ADIOS_FILE **infile, std::vector<int> wfiles, int
 		}
 		MPI_Allreduce(&l_nblocks,&g_nblocks,1,MPI_INT,MPI_SUM,comm); 
 		
-        if (var.is_timed)
+        if (var.is_timed==PIO_UNLIMITED || var.is_timed>0)
         {
             nsteps = g_nblocks / nblocks_per_step;
         }
@@ -872,7 +878,7 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
 	}
 	MPI_Allreduce(&l_nblocks,&g_nblocks,1,MPI_INT,MPI_SUM,comm); 
 
-    if (var.is_timed)
+    if (var.is_timed==PIO_UNLIMITED || var.is_timed>0)
     {
         nsteps = g_nblocks / nblocks_per_step;
         if (g_nblocks != nsteps * nblocks_per_step)
@@ -1015,7 +1021,7 @@ int ConvertVariableDarray(ADIOS_FILE **infile, int adios_varid, int ncid, Variab
         if (wfiles[0] < nblocks_per_step)
         {
 			/* different decompositions at different frames */	
-            if (var.is_timed)
+            if (var.is_timed==PIO_UNLIMITED || var.is_timed>0)
                 PIOc_setframe(ncid, var.nc_varid, frame_id);
 			if (fillval_exist) {
             	ret = PIOc_write_darray(ncid, var.nc_varid, decomp.ioid, (PIO_Offset)nelems,
@@ -1053,7 +1059,7 @@ int GetNumOfFiles(string infilename)
 	}
     struct dirent * dp;
     while ((dp = readdir(dirp)) != NULL) {
-		if (dp->d_type==DT_REG) file_count++;
+		if (dp->d_type==DT_REG && strstr(dp->d_name,".bp.")!=NULL) file_count++; 
     }
     closedir(dirp);	
 	return file_count;
@@ -1219,7 +1225,7 @@ void ConvertBPFile(string infilepath, string outfilename, int pio_iotype, int io
 
 					std::string op(ncop);
 					if (op == "put_var") {
-						if (var.is_timed) {
+						if (var.is_timed==PIO_UNLIMITED || var.is_timed>0) {
 							if (debug_out) printf("ConvertVariableTimedPutVar: %d\n",mpirank); fflush(stdout);
 							ConvertVariableTimedPutVar(infile, wfiles, i, ncid, var, n_bp_writers, comm, mpirank, nproc);
 						} else {
